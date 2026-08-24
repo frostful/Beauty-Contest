@@ -58,7 +58,6 @@ export function calculateRound(
   let winners: RoundContestant[] = [];
   const submittedPicks = submitted.map((player) => Number(player.pick));
   const hundredZeroVictory =
-    options.eliminatedBefore >= 3 &&
     submitted.length === 2 &&
     submittedPicks.includes(0) &&
     submittedPicks.includes(100);
