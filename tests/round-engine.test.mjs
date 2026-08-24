@@ -47,10 +47,10 @@ test("the exact-hit modifier doubles losses without changing the winner reward",
   assert.equal(result.outcomes.find((item) => item.id === "other").delta, -2);
 });
 
-test("100 defeats 0 and wins the match once the final rule is active", () => {
+test("100 defeats 0 and wins the match whenever only two living players remain", () => {
   const result = calculateRound(
     [player("zero", 0), player("hundred", 100)],
-    { eliminatedBefore: 3, previousWasTie: false },
+    { eliminatedBefore: 0, previousWasTie: false },
   );
   assert.deepEqual(result.winnerIds, ["hundred"]);
   assert.equal(result.gameWinnerId, "hundred");
@@ -59,12 +59,12 @@ test("100 defeats 0 and wins the match once the final rule is active", () => {
   assert.match(result.notice, /match is over/i);
 });
 
-test("the 0 versus 100 pairing remains a normal round before the final rule", () => {
+test("0 versus 100 remains a normal calculation while more than two players remain", () => {
   const result = calculateRound(
-    [player("zero", 0), player("hundred", 100)],
-    { eliminatedBefore: 2, previousWasTie: false },
+    [player("zero", 0), player("hundred", 100), player("middle", 50)],
+    { eliminatedBefore: 0, previousWasTie: false },
   );
-  assert.deepEqual(result.winnerIds, ["zero"]);
+  assert.deepEqual(result.winnerIds, ["middle"]);
   assert.equal(result.gameWinnerId, null);
   assert.equal(result.outcomes.every((item) => item.alive), true);
 });
