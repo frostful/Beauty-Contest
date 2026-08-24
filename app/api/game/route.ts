@@ -152,10 +152,12 @@ async function amendmentsForCompletedRound(db:D1Database,room:RoomRow,aliveAfter
   ).bind(room.code).first<{count:number}>())?.count??0;
   const eliminatedAfter=Math.max(0,room.initial_players-aliveAfter);
   const eliminatedBefore=Math.max(0,eliminatedAfter-newlyEliminated);
-  const thresholds:[number,RuleAmendmentId][]=[[1,"duplicates_void"],[2,"exact_double"],[3,"hundred_zero"]];
+  const thresholds:[number,RuleAmendmentId][]=[[1,"duplicates_void"],[2,"exact_double"]];
   for(const [threshold,id] of thresholds){
     if(eliminatedBefore<threshold&&eliminatedAfter>=threshold)amendments.push(id);
   }
+  const aliveBefore=aliveAfter+newlyEliminated;
+  if(aliveAfter===2&&aliveBefore>2)amendments.push("hundred_zero");
   return amendments;
 }
 
@@ -377,8 +379,11 @@ export async function POST(request: Request) {
     if (!me.is_host || room.status !== "lobby") return json({ error:"Only the host can start this match." }, 403);
     const count = (await db.prepare("SELECT COUNT(*) AS count FROM players WHERE room_code = ? AND token NOT LIKE 'spectator_%'").bind(code).first<{count:number}>())?.count ?? 0;
     if (count < 2) return json({ error:"At least 2 players are required." }, 409);
+    const openingAmendments:RuleAmendmentId[]=count===2?["hundred_zero"]:[];
+    const openingBriefing=openingAmendments.length>0;
     await db.batch([
-      db.prepare("UPDATE rooms SET status='playing', round=1, initial_players=?, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, message=NULL WHERE code=?").bind(count, now + room.round_seconds*1000, code),
+      db.prepare("UPDATE rooms SET status=?, round=1, initial_players=?, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, message=? WHERE code=?")
+        .bind(openingBriefing?"briefing":"playing",count,now+(openingBriefing?briefingWindowDuration(openingAmendments):room.round_seconds*1000),openingBriefing?`briefing:${openingAmendments.join(",")}`:null,code),
       db.prepare("UPDATE players SET score=0, alive=1, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token NOT LIKE 'spectator_%'").bind(code),
       db.prepare("UPDATE players SET score=0, alive=0, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token LIKE 'spectator_%'").bind(code),
     ]);
