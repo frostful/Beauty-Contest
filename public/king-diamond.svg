@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" role="img" aria-labelledby="title">
+  <title id="title">King of Diamonds emblem</title>
+  <defs>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff5349"/><stop offset="1" stop-color="#8f0808"/></linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <path d="M80 5 153 110 80 215 7 110Z" fill="#08090b" stroke="#e7e4dd" stroke-width="3"/>
+  <path d="M80 18 141 110 80 202 19 110Z" fill="none" stroke="#4e1717" stroke-width="1.5"/>
+  <path d="M80 35 128 110 80 185 32 110Z" fill="none" stroke="url(#red)" stroke-width="3" filter="url(#glow)"/>
+  <path d="m48 79 9-24 23 15 23-15 9 24-13-6-19 13-19-13Z" fill="none" stroke="#e7e4dd" stroke-width="3" stroke-linejoin="bevel"/>
+  <path d="M57 86v48M58 111l39-30M67 104l34 32" fill="none" stroke="#e7e4dd" stroke-width="10" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="m80 146 13 17-13 17-13-17Z" fill="url(#red)" filter="url(#glow)"/>
+  <path d="M44 40h20M96 180h20" stroke="#e7e4dd" stroke-width="2"/>
+</svg>

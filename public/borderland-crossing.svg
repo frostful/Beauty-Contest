@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300">
+  <defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#aeb5bd" stop-opacity=".8"/><stop offset="1" stop-color="#4c525a" stop-opacity=".15"/></linearGradient></defs>
+  <g fill="url(#fade)"><path d="M0 235V92h66v143M71 235V38h89v197M168 235V112h53v123M228 235V66h116v169M352 235V22h76v213M436 235V88h61v147M505 235V51h102v184M615 235V96h67v139M690 235V30h122v205M820 235V119h80v116"/></g>
+  <g fill="#090b0e"><path d="M83 55h19v18H83zm32 0h28v18h-28zm-32 33h19v18H83zm32 0h28v18h-28zM248 84h35v13h-35zm47 0h28v13h-28zm-47 28h35v13h-35zm47 0h28v13h-28zM708 49h34v15h-34zm46 0h38v15h-38zm-46 31h34v15h-34zm46 0h38v15h-38z"/></g>
+  <path d="M0 238h900M80 300l170-62m570 62-170-62M250 300l100-62m300 62-100-62M410 300l20-62m60 0 20 62" stroke="#e51b23" stroke-width="3" opacity=".7"/>
+  <g stroke="#d5d8dc" stroke-width="4" opacity=".75"><path d="M105 244 25 300m198-56-60 56m637-56 78 56m-196-56 58 56"/></g>
+</svg>

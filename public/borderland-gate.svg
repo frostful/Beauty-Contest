@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 420">
+  <defs><filter id="g"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <path d="M35 390V95L82 35h156l47 60v295" fill="none" stroke="#777e87" stroke-width="8"/>
+  <path d="M54 390V108l38-48h136l38 48v282" fill="#080a0d" fill-opacity=".65" stroke="#e51b23" stroke-width="3" filter="url(#g)"/>
+  <path d="M64 122h192M64 342h192M92 60l18 62m118-62-18 62" stroke="#e51b23" stroke-width="2" opacity=".7"/>
+  <rect x="92" y="145" width="136" height="82" rx="4" fill="#101319" stroke="#737a83"/>
+  <text x="160" y="174" text-anchor="middle" fill="#e51b23" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="3">GAME ENTRY</text>
+  <text x="160" y="207" text-anchor="middle" fill="#eeeae2" font-family="Georgia,serif" font-size="28" font-weight="700">K ♦</text>
+  <circle cx="160" cy="285" r="26" fill="none" stroke="#e51b23" stroke-width="3" filter="url(#g)"/><path d="m160 267 14 18-14 18-14-18Z" fill="#e51b23"/>
+  <path d="M110 390 90 420m120-30 20 30" stroke="#e51b23" stroke-width="5"/>
+</svg>

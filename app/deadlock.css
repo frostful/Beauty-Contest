@@ -1,0 +1,109 @@
+.deadlock-rule {
+  border-color: var(--red) !important;
+  color: var(--red) !important;
+  box-shadow: inset 0 0 18px #e51b2314, 0 0 14px #e51b2318;
+}
+
+.deadlock-banner {
+  width: min(390px, 100%);
+  min-height: 64px;
+  margin: 16px auto -16px;
+  padding: 9px 14px;
+  border: 1px solid #e51b2377;
+  background: linear-gradient(90deg, #e51b2318, #0c0d10, #e51b2318);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  text-align: left;
+  animation: deadlock-enter .45s ease-out both;
+}
+
+.deadlock-banner small,
+.deadlock-banner span {
+  color: #a6a9ae;
+  font-size: 8px;
+  letter-spacing: .14em;
+}
+
+.deadlock-banner span {
+  grid-column: 1;
+  color: var(--red);
+}
+
+.deadlock-banner strong {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  color: var(--red);
+  font: 800 26px var(--font-display);
+  text-shadow: 0 0 18px #e51b2377;
+}
+
+.range-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.range-wrap .range {
+  display: block;
+}
+
+.sealed-notch {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 12px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--red);
+  background: repeating-linear-gradient(135deg, var(--red) 0 2px, #19090a 2px 4px);
+  box-shadow: 0 0 15px #e51b2388;
+  pointer-events: none;
+}
+
+.number-control.sealed {
+  border-color: var(--red);
+  background: repeating-linear-gradient(135deg, #1b0a0c 0 8px, #100d0f 8px 16px);
+  box-shadow: inset 0 0 28px #e51b2326;
+  animation: sealed-pulse .75s ease-in-out infinite alternate;
+}
+
+.number-control.sealed strong {
+  color: var(--red);
+  text-decoration: line-through;
+}
+
+.sealed-warning {
+  min-height: 16px;
+  margin: -13px auto 8px;
+  color: var(--red);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+@keyframes deadlock-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes sealed-pulse {
+  to { box-shadow: inset 0 0 42px #e51b2340, 0 0 20px #e51b2322; }
+}
+
+@media (max-width: 720px) {
+  .deadlock-banner {
+    margin-top: 10px;
+  }
+
+  .deadlock-banner strong {
+    font-size: 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deadlock-banner,
+  .number-control.sealed {
+    animation: none;
+  }
+}

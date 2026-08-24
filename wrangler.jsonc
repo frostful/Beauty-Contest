@@ -1,0 +1,39 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "median-beauty-contest",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-08-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS"
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "median-beauty-contest",
+      "database_id": "f4234041-b2ea-4459-b218-7023ede538b1",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ROOM_EVENTS",
+        "class_name": "RoomEvents"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RoomEvents"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

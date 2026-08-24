@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560">
+  <defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e0d4b6"/><stop offset=".45" stop-color="#72684f"/><stop offset="1" stop-color="#292720"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <path d="M320 62v388M245 490h150M270 450h100" stroke="url(#metal)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M320 62 78 164h484Z" fill="none" stroke="url(#metal)" stroke-width="12" stroke-linejoin="round"/>
+  <circle cx="320" cy="92" r="31" fill="#111318" stroke="#d7c8a4" stroke-width="10"/>
+  <path d="m320 72 16 20-16 20-16-20Z" fill="#e51b23" filter="url(#glow)"/>
+  <g fill="none" stroke="#9d9278" stroke-width="5"><path d="M110 151 55 329m55-178 55 178M530 151l-55 178m55-178 55 178"/><path d="M35 330q75 90 150 0ZM455 330q75 90 150 0Z" fill="#17191d"/></g>
+  <path d="M298 449 320 403l22 46" fill="#17191d" stroke="#a99d82" stroke-width="8"/>
+</svg>
