@@ -1,0 +1,182 @@
+/* In-round information stays in document flow. The rules are a horizontal
+   briefing, then the timer, choice and roster form the playable row. */
+.arena {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: center;
+  padding-top: 34px;
+}
+
+.round-rules-card {
+  position: relative;
+  grid-column: 1 / -1;
+  z-index: 6;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 22px;
+  border: 1px solid #bdb5a6;
+  overflow: hidden;
+  background: #e8e2d6;
+  color: #151311;
+  box-shadow: 0 16px 42px #0008;
+  transition: max-height .52s cubic-bezier(.2,.78,.2,1),min-height .52s cubic-bezier(.2,.78,.2,1),margin .42s ease,transform .42s ease,opacity .3s ease;
+}
+
+.round-rules-card.is-open {
+  min-height: 208px;
+  max-height: 360px;
+  display: grid;
+  grid-template-columns: minmax(220px,.7fr) minmax(0,1.7fr) 120px;
+  align-items: stretch;
+  padding: 30px 46px;
+}
+
+.round-rules-card.is-folded {
+  min-height: 52px;
+  max-height: 52px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 0 16px;
+  background: #111214;
+  color: #e6e2d9;
+  border-color: #34363a;
+  box-shadow: none;
+}
+
+.round-rule-heading { align-self: center; padding-right: 32px; }
+.round-rule-heading small { display: block; color: #b11921; font-size: 10px; font-weight: 750; letter-spacing: .14em; }
+.round-rule-heading h2 { max-width: 310px; margin: 12px 0 7px; font: 760 clamp(24px,2.7vw,38px)/.95 var(--font-display); letter-spacing: -.045em; }
+.round-rule-heading p { max-width: 330px; margin: 0; color: #5c5750; font-size: 12px; line-height: 1.45; }
+.round-rules-card ol { align-self: center; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0; margin: 0; padding: 0; border-top: 1px solid #aaa397; list-style: none; }
+.round-rules-card li { position: relative; min-width: 0; min-height: 66px; display: grid; grid-template-columns: 25px minmax(0,1fr) auto; gap: 9px; align-items: center; padding: 9px 12px; border-right: 1px solid #aaa397; border-bottom: 1px solid #aaa397; }
+.round-rules-card li:nth-child(2n) { border-right: 0; }
+.round-rules-card li > span { color: #8d877e; font-size: 9px; }
+.round-rules-card li strong { display: block; font-size: 12px; letter-spacing: .035em; }
+.round-rules-card li p { margin: 3px 0 0; color: #625d55; font-size: 11px; line-height: 1.35; }
+.round-rules-card li em { align-self: start; margin-top: 2px; color: #b11921; font-size: 8px; font-style: normal; font-weight: 800; letter-spacing: .12em; }
+.round-rules-card li.is-new { background: #c92a3020; box-shadow: inset 3px 0 #b11921; }
+.round-rules-card > button { align-self: end; justify-self: end; min-width: 106px; padding: 11px 0; border: 0; border-bottom: 1px solid #8e877c; background: transparent; color: #28241f; font-size: 9px; font-weight: 750; letter-spacing: .09em; cursor: pointer; }
+.round-rules-card > button b { margin-left: 8px; color: #b11921; }
+.round-rules-card.is-folded .round-rule-heading { flex: 1; padding: 0; }
+.round-rules-card.is-folded .round-rule-heading small { color: #e23a42; font-size: 10px; }
+.round-rules-card.is-folded .round-rule-heading h2,
+.round-rules-card.is-folded .round-rule-heading p,
+.round-rules-card.is-folded ol,
+.round-rules-card.is-folded .rule-card-corner { display: none; }
+.round-rules-card.is-folded > button { align-self: center; color: #ddd9d0; border: 0; padding: 10px 0; }
+.rule-card-corner { position: absolute; display: grid; color: #b11921; font-family: Georgia,serif; line-height: .85; text-align: center; }
+.rule-card-corner b { font-size: 22px; }
+.rule-card-corner i { font-size: 16px; font-style: normal; }
+.rule-card-corner.top { left: 12px; top: 12px; }
+.rule-card-corner.bottom { right: 12px; bottom: 12px; transform: rotate(180deg); }
+
+@media (max-width: 1000px) {
+  .arena {
+    grid-template-rows: auto auto auto;
+    padding-top: 24px;
+  }
+  .round-rules-card.is-open { grid-template-columns: minmax(180px,.7fr) minmax(0,1.5fr) 92px; padding: 24px 34px; }
+  .round-rules-card li p { font-size: 10px; }
+}
+
+@media (max-width: 720px) {
+  .arena {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-top: 18px;
+  }
+  .round-rules-card { grid-column: 1; grid-row: 1; margin: 0; }
+  .round-rules-card.is-open { max-height: 72vh; display: grid; grid-template-columns: 1fr; gap: 16px; padding: 30px 28px 24px; }
+  .round-rule-heading { padding: 0 18px 0 0; }
+  .round-rule-heading h2 { margin-top: 9px; font-size: clamp(25px,7vw,34px); }
+  .round-rule-heading p { font-size: 12px; }
+  .round-rules-card ol { grid-template-columns: 1fr; width: 100%; }
+  .round-rules-card li,
+  .round-rules-card li:nth-child(2n) { min-height: 56px; border-right: 0; }
+  .round-rules-card li strong { font-size: 12px; }
+  .round-rules-card li p { font-size: 10px; }
+  .round-rules-card > button { justify-self: stretch; width: 100%; }
+  .round-rules-card.is-folded { grid-row: 1; margin: 0; }
+  .arena .choice-zone { grid-column: 1; grid-row: 2; }
+  .arena .timer { grid-column: 1; grid-row: 3; }
+  .arena .player-feed { grid-column: 1; grid-row: 4; }
+  .choice-zone h2 { font-size: clamp(42px, 14vw, 64px); overflow-wrap: anywhere; }
+}
+
+/* Personal elimination is a single centered composition. The card, vessel,
+   verdict and actions share one grid instead of using viewport guesses. */
+.personal-elimination {
+  grid-template-columns: minmax(300px, 500px) minmax(330px, 560px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 20px clamp(34px, 6vw, 92px);
+  padding: 64px clamp(28px, 6vw, 92px) 28px;
+  overflow: hidden;
+}
+
+.personal-verdict-code { left: clamp(28px, 6vw, 92px); top: 26px; }
+
+.personal-death-visual {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 500px);
+  height: min(72vh, 640px);
+}
+
+.personal-death-visual .personal-card-drop {
+  position: absolute;
+  inset: 0 0 auto;
+  width: min(58%, 280px);
+  margin-inline: auto;
+}
+
+.personal-death-visual .personal-acid-vat {
+  left: 50%;
+  bottom: 0;
+  width: min(100%, 500px);
+  height: 34%;
+  transform: translateX(-50%);
+}
+
+.personal-death-visual .personal-skull {
+  left: 50%;
+  bottom: 13%;
+  width: 116px;
+  height: 116px;
+  margin-left: -58px;
+}
+
+.personal-death-visual .personal-skull span { font-size: 76px; }
+.personal-death-copy { grid-column: 2; grid-row: 1; align-self: end; }
+.personal-death-copy h2 { max-width: 560px; font-size: clamp(46px, 6vw, 86px); overflow-wrap: anywhere; }
+.personal-death-actions { grid-column: 2; grid-row: 2; width: 100%; }
+
+@media (max-width: 760px) {
+  .personal-elimination {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(250px, 44vh) auto auto;
+    gap: 6px;
+    padding: 48px 14px 14px;
+    overflow-y: auto;
+    text-align: center;
+  }
+  .personal-verdict-code { left: 14px; right: 14px; top: 18px; }
+  .personal-death-visual {
+    grid-column: 1;
+    grid-row: 1;
+    width: min(100%, 430px);
+    height: 100%;
+  }
+  .personal-death-visual .personal-card-drop { width: min(45vw, 190px); }
+  .personal-death-visual .personal-acid-vat { width: min(100%, 420px); height: 37%; }
+  .personal-death-visual .personal-skull { bottom: 13%; width: 88px; height: 88px; margin-left: -44px; }
+  .personal-death-visual .personal-skull span { font-size: 58px; }
+  .personal-death-copy { grid-column: 1; grid-row: 2; align-self: end; }
+  .personal-death-copy h2 { margin: 8px auto; font-size: clamp(36px, 12vw, 56px); }
+  .personal-death-copy p { margin-inline: auto; font-size: 10px; }
+  .personal-death-actions { grid-column: 1; grid-row: 3; grid-template-columns: 1fr; gap: 7px; }
+  .personal-death-actions button { height: 52px; }
+}

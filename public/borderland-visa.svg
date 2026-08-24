@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 190">
+  <g transform="rotate(-6 180 95)" fill="none" stroke="#e51b23"><rect x="10" y="10" width="340" height="170" rx="14" stroke-width="6"/><rect x="22" y="22" width="316" height="146" rx="8" stroke-width="2" stroke-dasharray="8 6"/><path d="M30 62h300M30 130h300" stroke-width="2"/></g>
+  <text x="180" y="53" text-anchor="middle" fill="#e51b23" font-family="Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="7">BORDERLAND VISA</text>
+  <text x="180" y="119" text-anchor="middle" fill="#e51b23" font-family="Arial,sans-serif" font-size="49" font-weight="900" letter-spacing="5">03 DAYS</text>
+  <text x="180" y="151" text-anchor="middle" fill="#e51b23" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="4">PARTICIPATION REQUIRED</text>
+</svg>

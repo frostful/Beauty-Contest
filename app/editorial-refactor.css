@@ -1,0 +1,204 @@
+/* Restrained King of Diamonds system: editorial hierarchy over decorative HUD chrome. */
+:root{--surface-0:#08090a;--surface-1:#0d0f11;--surface-2:#131518;--rule:#2d3034;--text:#f0eee8;--text-2:#b5b7b9;--text-3:#797d81;--accent:#e3232b;--self:#289cff}
+html{background:var(--surface-0)}
+body{color:var(--text);background:var(--surface-0);font-kerning:normal;text-rendering:optimizeLegibility}
+button,input{font:inherit}
+.grain{opacity:.012!important}
+.suit-field{opacity:.35}
+.borderland-atmosphere{opacity:.38}
+.balance-scale-bg{opacity:.012!important}
+.shell,.game-shell{background-color:var(--surface-0)!important;background-image:linear-gradient(180deg,#0b0c0d 0,#08090a 65%,#0a0b0c 100%)!important}
+.shell:before,.game-shell:after{opacity:.025!important;animation:none!important}
+
+/* Navigation and landing */
+.topbar,.game-top{border-color:var(--rule)!important;background:#090a0bea;backdrop-filter:none}
+.brand,.mini-brand{color:var(--text);letter-spacing:.12em!important}
+.home-tabs button{min-width:78px;letter-spacing:.08em;color:var(--text-3)}
+.home-tabs button.active{color:var(--text);border-bottom-color:var(--accent)}
+.live{color:var(--text-3);letter-spacing:.08em}
+.hero{max-width:1180px;margin-inline:auto;padding-inline:clamp(20px,5vw,72px)}
+.landing-home .hero{width:min(100%,1180px);padding-right:min(34vw,410px)}
+.hero h1{max-width:880px;margin:38px 0 24px;font-size:clamp(58px,9.2vw,126px);line-height:.88;letter-spacing:-.065em;text-shadow:none!important;filter:none!important}
+.hero h1 em{color:var(--accent);font-style:normal}
+.eyebrow{color:var(--text-2);font-size:11px;letter-spacing:.11em}
+.eyebrow span{display:inline-block!important;margin-right:12px;padding-right:12px;border-right:1px solid var(--accent);color:var(--accent);font-size:inherit}
+.lede{max-width:560px;color:var(--text-2)!important;font-size:clamp(16px,1.6vw,20px)!important;line-height:1.55!important;letter-spacing:0!important}
+.hero-note{max-width:430px;margin:0 0 30px;padding-left:15px;border-left:1px solid #54565b;color:var(--text-3);font:500 12px/1.55 var(--font-body);letter-spacing:.02em}
+.orb-wrap{display:none!important}
+.hero-table-card{position:absolute;z-index:2;right:clamp(28px,8vw,120px);top:148px;width:clamp(235px,24vw,330px);aspect-ratio:5/7;display:grid;place-items:center;padding:42px 28px;border:1px solid #c8c0b2;border-radius:10px;background:#e8e2d6;color:#171411;box-shadow:18px 22px 0 #050506,19px 23px 0 #4b171a;transform:rotate(2.2deg);text-align:center}
+.hero-table-card:before{content:"";position:absolute;inset:8px;border:1px solid #aaa295;pointer-events:none}
+.hero-table-card>img{position:absolute;width:54%;height:62%;object-fit:contain;opacity:.1;filter:grayscale(1)}
+.hero-table-card>div{position:relative;z-index:2;display:grid;justify-items:center}
+.hero-table-card small{color:#6c665d;font-size:8px;font-weight:750;letter-spacing:.16em}
+.hero-table-card strong{margin:8px 0 2px;color:#b11921;font:700 clamp(68px,8vw,108px)/.9 Georgia,serif}
+.hero-table-card p{max-width:180px;margin:8px 0 0;padding-top:10px;border-top:1px solid #aaa295;font-size:9px;font-weight:760;line-height:1.45;letter-spacing:.09em}
+.table-card-corner{position:absolute;display:grid;color:#b11921;font-family:Georgia,serif;line-height:.85;text-align:center}
+.table-card-corner b{font-size:28px}.table-card-corner i{font-size:18px;font-style:normal}
+.table-card-corner.top{left:17px;top:18px}.table-card-corner.bottom{right:17px;bottom:18px;transform:rotate(180deg)}
+.actions{display:flex!important;flex-wrap:wrap;gap:10px!important;margin-top:34px!important}
+.actions button,.enter-btn,.lock-btn,.start-btn,.next-btn,.restart-btn,.rules-play{min-height:52px;border:1px solid var(--rule)!important;border-radius:2px!important;clip-path:none!important;letter-spacing:.06em!important;text-transform:none!important;box-shadow:none!important;transform:none!important}
+.actions .primary,.enter-btn,.lock-btn,.start-btn,.next-btn,.restart-btn,.rules-play{background:var(--accent)!important;color:#fff!important}
+.actions .secondary,.actions .rules-action{background:transparent!important;color:var(--text)!important}
+.actions button:hover,.enter-btn:hover,.lock-btn:hover,.start-btn:hover,.next-btn:hover,.restart-btn:hover,.rules-play:hover{border-color:#f04a50!important;filter:brightness(1.08);box-shadow:none!important;transform:none!important}
+.rule-strip{max-width:880px;margin-top:56px!important;border-top:1px solid var(--rule);border-bottom:0!important;background:none!important}
+.rule-strip>div{padding:20px 24px!important;border-color:var(--rule)!important;background:none!important}
+.rule-strip p{color:var(--text-2)!important;font-size:12px!important;line-height:1.55}
+.rule-strip strong{color:var(--text)}
+.shell footer{color:var(--text-3);letter-spacing:.08em;border-color:var(--rule)}
+
+/* Forms and rooms */
+.entry-panel,.roster,.code-card,.spectator-card{border:1px solid var(--rule)!important;border-radius:0!important;background:var(--surface-1)!important;box-shadow:none!important;clip-path:none!important}
+.entry-panel label,.timer-pick>span,.form-kicker{letter-spacing:.08em;color:var(--text-2)}
+.entry-panel label input{border-color:var(--rule);background:#08090a;color:var(--text);letter-spacing:.02em}
+.timer-pick button{border-color:var(--rule);background:#090a0b;letter-spacing:.04em}
+.timer-pick button.active{border-color:var(--accent);color:var(--text);background:#1b0d0f}
+.roster{padding:22px}
+.roster-row,.feed-row{border-color:var(--rule)}
+.roster-row strong,.feed-row strong{color:var(--text);letter-spacing:0}
+.roster-row em,.roster-row>i,.feed-row>i{letter-spacing:.05em}
+.code-card strong{color:var(--text);letter-spacing:.12em}
+
+/* Game chrome */
+.game-shell{padding-inline:clamp(18px,4vw,64px)}
+.game-top{height:72px;gap:22px}
+.room-meta,.round-meta{height:72px;border-color:var(--rule);padding-top:15px}
+.room-meta small,.round-meta small,.sound-toggle small{letter-spacing:.08em;color:var(--text-3)}
+.room-meta button{letter-spacing:.08em}
+.sound-toggle{border-color:var(--rule);background:transparent;border-radius:2px;color:var(--text-2)}
+.sound-toggle.on{border-color:#643035;background:transparent;color:var(--text)}
+.sound-toggle.on span{color:var(--accent);text-shadow:none}
+.choice-zone h2,.lobby-copy h2,.finished h2{filter:none!important;text-shadow:none!important}
+.number-control,.locked-choice,.eliminated-card{border-color:var(--rule);background:var(--surface-1);box-shadow:none;clip-path:none}
+.number-control strong,.locked-choice strong{color:var(--text)}
+.locked-choice{border-left:3px solid var(--accent)}
+.player-feed{border-color:var(--rule)}
+.feed-row.dead{opacity:.48}
+
+/* Calculation surface */
+.calculation-stage{max-width:1200px!important;padding-top:28px!important}
+.unified-calculator{border:1px solid var(--rule)!important;background:var(--surface-1)!important;box-shadow:none!important;clip-path:none!important}
+.unified-calculator:before{display:none}
+.unified-stage>.calc-status{height:44px;border-color:var(--rule)!important;background:#090a0b!important;color:var(--text-2);font-size:11px;letter-spacing:.03em}
+.calc-status b{font-family:var(--font-body);font-size:10px;letter-spacing:.04em}
+.unified-steps{height:52px;border-color:var(--rule);background:#090a0b}
+.unified-steps span{border-color:#202327;color:var(--text-3);font-size:10px;letter-spacing:.03em;text-transform:none}
+.unified-steps span.active{background:#151113;box-shadow:inset 0 -2px var(--accent);color:var(--text)}
+.choice-inputs{background:var(--rule);border-color:var(--rule)}
+.choice-source{background:var(--surface-2);opacity:.48}
+.choice-source.current{background:#1c1012;box-shadow:inset 0 -2px var(--accent)}
+.choice-source>span{font-size:11px;color:var(--text-2)}
+.formula-core{min-height:132px;background:var(--surface-1);border-bottom:1px solid var(--rule)}
+.formula-core>small{color:var(--text-2);font-size:10px;letter-spacing:.04em;text-transform:none}
+.formula-core>span,.formula-final span{color:var(--text-3);font-size:10px;letter-spacing:.03em;text-transform:none}
+.formula-main strong,.formula-final strong,.formula-result{color:var(--accent);text-shadow:none}
+.formula-final strong{font-size:clamp(44px,6vw,70px)}
+.unified-line-window{border-color:var(--rule);background:#090a0b}
+.line-active .line-track{background:#6f747a;box-shadow:none}
+.number-line-legend{color:var(--text-2);letter-spacing:.03em;font-size:8px;text-transform:none}
+.dense-result-ledger{border-top:0;background:var(--surface-1)}
+.dense-result-ledger>div{border-color:var(--rule);background:transparent}
+.dense-result-ledger strong{color:var(--text)}
+.dense-result-ledger small,.dense-result-ledger em{color:var(--text-2)}
+.dense-result-ledger>div.winner{background:#201013}
+.unified-verdict{border-top:1px solid var(--rule)}
+.unified-verdict>p{font-size:16px;letter-spacing:0;text-transform:none}
+.unified-verdict>span{font-size:10px;letter-spacing:.03em;text-transform:none}
+.skip-calc{border:0;background:none;color:var(--text-2);letter-spacing:0;text-transform:none}
+.skip-calc:hover{color:var(--text);background:none}
+.scale-pan-data,.scale-equilibrium{border-color:var(--rule);background:#0b0c0d;box-shadow:none;clip-path:none}
+.scale-pan-data small,.scale-equilibrium small,.scale-pan-data span,.scale-equilibrium span{letter-spacing:.03em;text-transform:none}
+
+/* Calculation and result are separate compositions. Keep the instrument centered,
+   then remove the step rail once it has finished explaining the sequence. */
+.results .unified-steps{transition:height .32s ease,opacity .2s ease,border-color .2s ease}
+.results.is-resolved .unified-steps{height:0!important;min-height:0;overflow:hidden;border:0!important;opacity:0;visibility:hidden;pointer-events:none}
+.balance-active .unified-number-line,
+.balance-active .dense-line{width:min(calc(100% - 48px),820px);min-width:0;height:284px;margin-inline:auto}
+.balance-active .line-track,
+.balance-active .dense-line .line-track{left:50%!important;right:auto!important;top:150px!important;width:min(78%,640px);transform:translateX(-50%) rotate(var(--scale-tilt,-6deg))!important;transform-origin:50% 50%}
+.balance-active .line-track:before{left:4%!important}
+.balance-active .line-track:after{right:4%!important}
+.balance-active .moving-fulcrum-mini,
+.balance-active .dense-line .moving-fulcrum-mini{left:50%!important;top:154px!important;transform:translateX(-50%)!important}
+.balance-active .scale-equilibrium{top:10px}
+.balance-active .scale-pan-data{top:76px}
+.balance-active .scale-pan-data.left{left:5%}
+.balance-active .scale-pan-data.right{right:5%}
+
+/* A deadlock names its participants instead of looking like an ordinary loss. */
+.number-line-legend .tie-key:before{background:#d7b458;box-shadow:0 0 0 2px #090b0e,0 0 10px #d7b45888}
+.line-active .player-marker.tied,
+.line-active .dense-line .player-marker.tied{border-color:#f0c65d!important;background:#b98922!important;box-shadow:0 0 0 4px #0a0d11,0 0 24px #e6b94b!important;z-index:13!important}
+.line-active .player-marker.tied:not(.expanded):before{content:"TIE";position:absolute;left:50%;top:-22px;transform:translateX(-50%);color:#f0c65d;font:700 7px var(--font-body);letter-spacing:.1em;text-shadow:0 1px #08090a;white-space:nowrap}
+.line-active .dense-line .player-marker.tied.is-self:not(.expanded):after{content:"YOU · TIED"!important;color:#f0c65d!important}
+.dense-result-ledger{--tie:#d7b458}
+.dense-result-ledger>div{grid-template-columns:24px 29px minmax(0,1fr) 44px 70px 106px}
+.dense-result-ledger>div.tied{position:relative;background:linear-gradient(90deg,#d7b45822,#12100a)!important;box-shadow:inset 3px 0 var(--tie),inset 0 0 30px #d7b4580b}
+.dense-result-ledger>div.tied:not(.eliminated):after{content:"TIED CLOSEST";position:absolute;right:10px;top:4px;color:var(--tie);font:700 6px var(--font-body);letter-spacing:.12em}
+.dense-result-ledger>div.tied .profile-avatar{color:#151007;background:var(--tie);box-shadow:0 0 13px #d7b45888}
+.dense-result-ledger>div.tied>strong,.dense-result-ledger>div.tied>b{color:#f0d58e}
+.score-summary{display:grid;gap:2px;min-width:0;font-style:normal!important}
+.score-summary>span{display:flex;align-items:center;justify-content:space-between;gap:6px;white-space:nowrap}
+.score-summary small{color:var(--text-3)!important;font-size:6px!important;letter-spacing:.08em}
+.score-summary b{color:var(--text)!important;font:700 9px var(--font-body)!important}
+.dense-result-ledger>div.tied .score-summary b{color:#f0d58e!important}
+
+/* Rules remain literal playing cards—the one intentionally skeuomorphic surface. */
+.rules-intro h2{filter:none!important;text-shadow:none!important}
+.classic-rule-card{box-shadow:0 14px 30px #0008;animation-duration:.45s}
+.advanced-rules{border-color:var(--rule);background:transparent}
+.advanced-rules span,.advanced-rules b{letter-spacing:.04em}
+
+@media(max-width:720px){
+  .borderland-atmosphere{opacity:.2}
+  .game-shell{padding-inline:12px}
+  .topbar{padding-inline:14px}
+  .home-tabs{position:static;transform:none;margin-left:auto}
+  .home-tabs button{min-width:58px;padding-inline:8px;font-size:9px}
+  .live{display:none}
+  .hero{padding:52px 20px 100px}
+  .landing-home .hero{width:100%;padding-right:20px;padding-bottom:38px}
+  .hero h1{margin-top:26px;font-size:clamp(52px,15vw,78px);line-height:.9;letter-spacing:-.06em;overflow-wrap:anywhere}
+  .lede{font-size:16px!important}
+  .actions{display:grid!important;grid-template-columns:1fr!important}
+  .actions button{width:100%!important}
+  .rule-strip{grid-template-columns:1fr!important;margin-top:38px!important}
+  .rule-strip>div{padding:16px 0!important;border-left:0!important;border-bottom:1px solid var(--rule)}
+  .hero-note{font-size:11px}
+  .hero-table-card{position:relative;right:auto;top:auto;width:min(62vw,230px);margin:4px auto 72px;padding:34px 22px;box-shadow:12px 14px 0 #050506,13px 15px 0 #4b171a;transform:rotate(-1.5deg)}
+  .game-top{height:64px;gap:6px}
+  .mini-brand{font-size:0}
+  .mini-brand img{width:24px;height:32px}
+  .sound-toggle{min-width:42px;width:42px;padding:0}
+  .sound-toggle small{display:none}
+  .room-meta,.round-meta{height:64px;min-width:68px;padding:11px 0 0 10px}
+  .calculation-stage{padding:18px 0 32px!important}
+  .results.unified-stage>.unified-heading{margin-top:8px}
+  .unified-stage>.calc-status{font-size:10px}
+  .unified-steps{height:44px}
+  .unified-steps span{font-size:8px;gap:4px}
+  .results.is-resolved .unified-steps{height:0!important}
+  .balance-active .unified-number-line,
+  .balance-active .dense-line{width:min(calc(100% - 20px),440px);height:236px;margin-inline:auto}
+  .balance-active .line-track,
+  .balance-active .dense-line .line-track{top:126px!important;width:min(76%,330px)}
+  .balance-active .moving-fulcrum-mini,
+  .balance-active .dense-line .moving-fulcrum-mini{top:130px!important;scale:.76}
+  .balance-active .scale-equilibrium{top:6px;width:132px}
+  .balance-active .scale-pan-data{top:62px;width:88px;min-height:50px}
+  .balance-active .scale-pan-data.left{left:0}
+  .balance-active .scale-pan-data.right{right:0}
+  .dense-result-ledger>div{grid-template-columns:22px 28px minmax(0,1fr) 38px 58px 92px}
+  .dense-result-ledger>div.tied:not(.eliminated):after{right:7px;top:3px;font-size:5px}
+  .score-summary small{font-size:5px!important}
+  .score-summary b{font-size:8px!important}
+  .choice-source{min-height:58px}
+  .formula-core{min-height:108px}
+  .formula-final strong{font-size:clamp(36px,11vw,46px)!important}
+  .number-line-legend{font-size:6px}
+  .dense-result-ledger>div{font-size:10px}
+  .unified-verdict>p{font-size:13px}
+  .classic-rules-deck{grid-template-columns:1fr!important}
+}
+
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.classic-rule-card{animation:none!important}}
