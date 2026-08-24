@@ -3,7 +3,7 @@
   "name": "median-beauty-contest",
   "main": "dist/server/index.js",
   "compatibility_date": "2026-08-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": "dist/client",
     "binding": "ASSETS"
