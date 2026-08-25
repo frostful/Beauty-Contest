@@ -608,6 +608,7 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
     },180);
     return()=>clearTimeout(timer);
   },[state.room.round]);
+  useEffect(()=>{setLedgerExpanded(false);},[state.room.round]);
 
   const phase=elapsed<loadEnd?0:elapsed<balanceEnd?1:elapsed<factorEnd?2:elapsed<lineEnd?3:4;
   const arrivedCount=Math.min(participants.length,Math.max(0,Math.floor((elapsed-transferStart-transferDuration)/transferStep)+1));
@@ -624,7 +625,7 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
   const acidComplete=eliminatedThisRound.length===0||elapsed>=acidEnd;
   const selected=participants.find(player=>player.id===selectedId)??participants.find(player=>player.id===state.me.id)??participants[0];
   const sorted=[...participants].sort((a,b)=>Math.abs((a.pick??0)-finalTarget)-Math.abs((b.pick??0)-finalTarget));
-  const visibleScores=ledgerExpanded?sorted:sorted.slice(0,4);
+  const visibleScores=ledgerExpanded?sorted:[];
   const selectedIsWinner=selected&&!eliminatedIds.has(selected.id)&&!selected.invalid&&(selected.id===state.room.winnerId||tiedIds.has(selected.id));
   const status=phase===0
     ? activeTransfer>=0?`Adding ${participants[activeTransfer]?.name}'s choice`:"Preparing submitted choices"
@@ -709,13 +710,13 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
         {selected&&<><AvatarBadge avatar={selected.avatar}/><span><small>{selectedIsWinner?(tiedIds.has(selected.id)?"TIED CLOSEST":"ROUND WINNER"):selected.id===state.me.id?"YOUR POSITION":"SELECTED POSITION"}</small><strong>{selected.name}</strong></span><b>{selected.pick}</b><span><small>DISTANCE</small><strong>{Math.abs((selected.pick??0)-finalTarget).toFixed(2)}</strong></span></>}
       </div>}
 
-      {final&&<div ref={ledgerRef} tabIndex={-1} className={`result-ledger-shell ${ledgerExpanded?"is-expanded":"is-compact"}`} aria-label="Round scores">
-        <div className="result-ledger" data-count={visibleScores.length}>
+      {final&&<div ref={ledgerRef} tabIndex={-1} className={`result-ledger-shell ${ledgerExpanded?"is-expanded":"is-collapsed"}`} aria-label="Round scores">
+        <div id="round-player-leaderboard" className="result-ledger" data-count={visibleScores.length} hidden={!ledgerExpanded}>
         {visibleScores.map((player,index)=>{const outcomeWinner=!eliminatedIds.has(player.id)&&!player.invalid&&(player.id===state.room.winnerId||tiedIds.has(player.id));return <button onClick={()=>setSelectedId(player.id)} className={`${player.id===state.me.id?"self":""} ${outcomeWinner?"winner":""} ${eliminatedIds.has(player.id)?"eliminated":""}`} key={player.id}>
           <span>{String(index+1).padStart(2,"0")}</span><AvatarBadge avatar={player.avatar}/><strong>{player.name}{player.id===state.me.id&&<small>YOU</small>}</strong><b>{player.pick}</b><em>Δ {Math.abs((player.pick??0)-finalTarget).toFixed(2)}</em><i><small>ROUND</small><b>{player.roundDelta>0?"+":""}{player.roundDelta}</b><small>TOTAL</small><b>{player.score}</b></i>
         </button>})}
         </div>
-        {sorted.length>4&&<button className="ledger-toggle" onClick={()=>{tone("reveal");setLedgerExpanded(value=>!value);}} aria-expanded={ledgerExpanded}>{ledgerExpanded?"SHOW TOP FOUR":"SHOW ALL PLAYERS"}<b>{ledgerExpanded?"↑":"↓"}</b><span>{sorted.length} ENTRIES</span></button>}
+        <button className="ledger-toggle" onClick={()=>{tone("reveal");setLedgerExpanded(value=>!value);}} aria-expanded={ledgerExpanded} aria-controls="round-player-leaderboard">{ledgerExpanded?"HIDE PLAYER LEADERBOARD":"SHOW PLAYER LEADERBOARD"}<b>{ledgerExpanded?"↑":"↓"}</b><span>{sorted.length} PLAYERS</span></button>
       </div>}
 
       {acidActive&&<AcidCeremony players={eliminatedThisRound} complete={acidComplete}/>}
