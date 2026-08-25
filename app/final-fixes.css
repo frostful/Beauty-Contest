@@ -19,6 +19,7 @@
 
 /* Blueprint Lady Justice remains present throughout the landing and game flow.
    The radial mask keeps the square SVG artboard from reading as a panel. */
+.borderland-atmosphere { opacity: 1 !important; }
 .balance-scale-bg { display: none !important; }
 .lady-justice-blueprint-bg {
   display: block;
@@ -27,15 +28,15 @@
   width: min(90vw, 1280px);
   max-width: none;
   height: auto;
-  opacity: .34;
+  opacity: .42;
   transform: translate(-50%, -50%);
   mix-blend-mode: screen;
-  filter: contrast(1.06) saturate(.72);
+  filter: brightness(1.28) contrast(1.16) saturate(1.12) drop-shadow(0 0 26px #69c9ff52);
   -webkit-mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
   mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
 }
-.landing-home .lady-justice-blueprint-bg { opacity: .46; }
-.game-shell .lady-justice-blueprint-bg { opacity: .3; }
+.landing-home .lady-justice-blueprint-bg { opacity: .58; }
+.game-shell .lady-justice-blueprint-bg { opacity: .34; }
 
 @media (max-width: 920px) {
   .lady-justice-blueprint-bg {
@@ -43,17 +44,26 @@
     top: 54%;
     width: 138vw;
   }
-  .landing-home .lady-justice-blueprint-bg { opacity: .4; }
+  .landing-home .lady-justice-blueprint-bg { opacity: .54; }
 }
 
 @media (max-width: 720px) {
   .lady-justice-blueprint-bg {
-    left: 55%;
-    top: 48%;
-    width: 182vw;
+    left: 50%;
+    top: 54%;
+    width: min(150vw, 600px);
+    opacity: .46;
+    filter: brightness(1.38) contrast(1.2) saturate(1.16) drop-shadow(0 0 24px #75d2ff66);
   }
-  .landing-home .lady-justice-blueprint-bg { top: 43%; opacity: .34; }
-  .game-shell .lady-justice-blueprint-bg { opacity: .28; }
+  .landing-home .lady-justice-blueprint-bg {
+    left: 50%;
+    top: 66%;
+    width: min(158vw, 620px);
+    opacity: .68;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
+    mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
+  }
+  .game-shell .lady-justice-blueprint-bg { opacity: .4; }
 }
 
 /* Homepage: one complete, tactile playing card with a deliberate flip. */
@@ -521,7 +531,16 @@
       repeating-linear-gradient(90deg, transparent 0 29px, #ffffff14 29px 30px),
       repeating-linear-gradient(0deg, transparent 0 29px, #ffffff10 29px 30px) !important;
   }
-  .landing-home .hero { max-width: 100%; margin-left: 0; padding: 48px 0 34px; }
+  .landing-home {
+    min-height: 100svh;
+    padding-bottom: 24px;
+  }
+  .landing-home .hero {
+    max-width: 100%;
+    min-height: calc(100svh - 72px);
+    margin-left: 0;
+    padding: 42px 0 clamp(280px, 42svh, 380px);
+  }
   .landing-home .hero h1 {
     width:100%;
     max-width:none;
@@ -537,18 +556,12 @@
   .landing-home .hero h1 em { width:max-content; max-width:100%; white-space:nowrap; }
   .hero h1 .title-the { margin-left: 1px; font-size: .52em; }
   .landing-home .hero h1 em { font-size: .88em; letter-spacing: -.075em; }
-  .landing-home .lede { max-width:100%; margin:28px 0 32px; font-size:18px; line-height:1.5; }
-  .landing-home .actions { grid-template-columns: 1fr; width: 100%; }
-  .landing-home .actions button { height: 60px; font-size: 14px; }
+  .landing-home .lede { max-width:300px; margin:24px 0 28px; font-size:16px; line-height:1.5; }
+  .landing-home .actions { grid-template-columns: 1fr; width: 100%; gap: 10px; }
+  .landing-home .actions button { height: 58px; font-size: 14px; }
   .hero-table-card {
-    position: relative;
-    right: auto;
-    top: auto;
-    width: min(82vw, 330px);
-    margin: 28px auto 76px;
-    transform: rotate(-2.2deg) perspective(900px) rotateY(4deg);
+    display: none !important;
   }
-  .hero-card-inner { filter: drop-shadow(14px 17px 0 #050506) drop-shadow(1px 1px 0 #4b171a); }
   .entry-stage { min-height: calc(100vh - 72px); padding: 26px 12px 46px; }
   .entry-stage .entry-panel { padding: 34px 22px; box-shadow: 10px 12px 0 #050506 !important; }
   .topbar .home-tabs { gap: 2px; }
