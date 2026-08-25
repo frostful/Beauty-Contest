@@ -1,41 +1,9 @@
 import { sites } from "@openai/sites-vite-plugin";
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
-
-const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
-  "00000000-0000-4000-8000-000000000000";
-
-const { d1, r2 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
-
-const localBindingConfig = {
-  main: "./worker/index.ts",
-  compatibility_flags: ["nodejs_compat", "global_fetch_strictly_public"],
-  d1_databases: d1
-    ? [
-        {
-          binding: d1,
-          database_name: "site-creator-d1",
-          database_id: SITE_CREATOR_PLACEHOLDER_DATABASE_ID,
-        },
-      ]
-    : [],
-  durable_objects: {
-    bindings: [{ name: "ROOM_EVENTS", class_name: "RoomEvents" }],
-  },
-  migrations: [{ tag: "v1", new_sqlite_classes: ["RoomEvents"] }],
-  r2_buckets: r2
-    ? [
-        {
-          binding: r2,
-          bucket_name: "site-creator-r2",
-        },
-      ]
-    : [],
-};
 
 export default defineConfig(async ({ command }) => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
@@ -56,12 +24,16 @@ export default defineConfig(async ({ command }) => {
       sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
-        // Preview uses placeholder resources and the TypeScript Worker entry.
-        // Production must read the real bindings from wrangler.jsonc exactly
-        // once; merging both configurations duplicates D1 and Durable Objects.
+        // Bindings and migrations come from wrangler.jsonc. Repeating them here
+        // makes Miniflare register the same Durable Object twice in local dev.
         config:
           command === "serve"
-            ? localBindingConfig
+            ? {
+                main: "./worker/index.ts",
+                // Keep local workerd within the newest date bundled by this
+                // dependency version; production still uses wrangler.jsonc.
+                compatibility_date: "2026-05-22",
+              }
             : { main: "./worker/index.ts" },
       }),
     ],
