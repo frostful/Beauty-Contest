@@ -572,14 +572,27 @@
       repeating-linear-gradient(0deg, transparent 0 29px, #ffffff10 29px 30px) !important;
   }
   .landing-home {
+    display: grid;
+    grid-template-rows: 72px minmax(0, 1fr) auto;
+    height: 100svh;
     min-height: 100svh;
-    padding-bottom: 24px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+  .landing-home .borderland-atmosphere {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 100svh;
   }
   .landing-home .hero {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     max-width: 100%;
-    min-height: calc(100svh - 72px);
+    min-height: 0;
     margin-left: 0;
-    padding: 42px 0 clamp(280px, 42svh, 380px);
+    padding: clamp(16px, 3.5svh, 32px) 0;
   }
   .landing-home .hero h1 {
     width:100%;
@@ -620,9 +633,10 @@
     left: auto;
     right: auto;
     bottom: auto;
-    margin: 0 0 6px;
-    padding: 24px 0 0;
+    margin: 0;
+    padding: 10px 0 0;
     border-top: 1px solid #2b2d31;
+    font-size: 9px;
   }
   .landing-home .home-footer .public-legal-links { justify-content: center; gap: 10px 18px; text-align: center; }
   .landing-home .home-footer .public-legal-links span { flex-basis: 100%; margin-left: 0; line-height: 1.5; }
