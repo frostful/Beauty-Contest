@@ -162,16 +162,63 @@
 }
 
 @media (max-width: 600px) {
-  .landing-rules { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-  .landing-rules .rules-page { min-height: 0; }
-  .classic-rules { padding-bottom: 12px; }
-  .classic-rules .rules-intro h2 { font-size: clamp(45px, 14vw, 66px); }
-  .classic-rules-deck { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 18px; margin-inline: -24px; padding: 20px 24px 30px; scrollbar-width: none; }
+  .landing-rules {
+    display: grid;
+    grid-template-rows: 72px minmax(0, 1fr);
+    height: 100svh;
+    min-height: 100svh;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+  .landing-rules .rules-page {
+    min-height: 0;
+    padding: 12px 0 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+  .classic-rules { padding-bottom: 0; }
+  .classic-rules .rules-intro { margin-bottom: 0; }
+  .classic-rules .rules-intro .section-index { margin-bottom: 7px; }
+  .classic-rules .rules-intro h2 {
+    font-size: clamp(34px, 9.5vw, 40px);
+    line-height: .84;
+    white-space: nowrap;
+  }
+  .classic-rules .rules-intro p {
+    margin-top: 10px;
+    padding-left: 12px;
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .classic-rules-deck {
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    margin: 0 -24px;
+    padding: 8px 24px 10px;
+    scrollbar-width: none;
+  }
   .classic-rules-deck::-webkit-scrollbar { display: none; }
-  .classic-rule-card { flex: 0 0 min(82vw, 310px); min-height: 430px; aspect-ratio: 5 / 7; scroll-snap-align: center; }
-  .classic-rule-copy h3 { font-size: 27px; }
-  .classic-rule-copy p { font-size: 14px; }
+  .classic-rule-card {
+    flex: 0 0 clamp(200px, 32svh, 243px);
+    width: clamp(200px, 32svh, 243px);
+    height: clamp(280px, 45svh, 340px);
+    min-height: 0;
+    aspect-ratio: auto;
+    padding: 48px 22px 108px;
+    scroll-snap-align: center;
+  }
+  .rule-diagram { height: 120px; min-height: 120px; }
+  .classic-rule-copy { left: 22px; right: 22px; bottom: 38px; padding-top: 12px; }
+  .classic-rule-copy h3 { font-size: 25px; }
+  .classic-rule-copy p { font-size: 13px; line-height: 1.4; }
   .target-diagram > b { font-size: 49px; }
+  .rules-play { height: 54px; margin-top: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

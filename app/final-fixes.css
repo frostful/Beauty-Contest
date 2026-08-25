@@ -28,18 +28,18 @@
   width: min(90vw, 1280px);
   max-width: none;
   height: auto;
-  opacity: .42;
+  opacity: .29;
   transform: translate(-50%, -50%);
   mix-blend-mode: screen;
   filter: brightness(1.24) contrast(1.16) saturate(.64) drop-shadow(0 0 24px #dbefff42);
   -webkit-mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
   mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
 }
-.landing-home .lady-justice-blueprint-bg { opacity: .58; }
-.game-shell .lady-justice-blueprint-bg { opacity: .34; }
+.landing-home .lady-justice-blueprint-bg { opacity: .41; }
+.game-shell .lady-justice-blueprint-bg { opacity: .24; }
 
 @media (min-width: 921px) {
-  .landing-home .lady-justice-blueprint-bg { opacity: .4; }
+  .landing-home .lady-justice-blueprint-bg { opacity: .28; }
 }
 
 @media (max-width: 920px) {
@@ -48,7 +48,7 @@
     top: 54%;
     width: 138vw;
   }
-  .landing-home .lady-justice-blueprint-bg { opacity: .54; }
+  .landing-home .lady-justice-blueprint-bg { opacity: .38; }
 }
 
 @media (max-width: 720px) {
@@ -64,15 +64,15 @@
     left: 50%;
     top: 54%;
     width: min(150vw, 600px);
-    opacity: .46;
+    opacity: .32;
     filter: brightness(1.32) contrast(1.2) saturate(.62) drop-shadow(0 0 22px #e2f2ff52);
   }
   .landing-home .lady-justice-blueprint-bg {
-    opacity: .68;
+    opacity: .48;
     -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
     mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
   }
-  .game-shell .lady-justice-blueprint-bg { opacity: .4; }
+  .game-shell .lady-justice-blueprint-bg { opacity: .28; }
 }
 
 /* Homepage: one complete, tactile playing card with a deliberate flip. */
@@ -588,11 +588,11 @@
     align-self: stretch;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     max-width: 100%;
     min-height: 0;
     margin-left: 0;
-    padding: clamp(16px, 3.5svh, 32px) 0;
+    padding: clamp(34px, 6svh, 52px) 0 0;
   }
   .landing-home .hero h1 {
     width:100%;
@@ -609,7 +609,14 @@
   .landing-home .hero h1 em { width:max-content; max-width:100%; white-space:nowrap; }
   .hero h1 .title-the { margin-left: 1px; font-size: .52em; }
   .landing-home .hero h1 em { font-size: .88em; letter-spacing: -.075em; }
-  .landing-home .lede { max-width:300px; margin:24px 0 28px; font-size:16px; line-height:1.5; }
+  .landing-home .lede {
+    max-width: 310px;
+    margin: 14px 0 16px;
+    color: #e0ddd5;
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.45;
+  }
   .landing-home .actions { grid-template-columns: 1fr; width: 100%; gap: 10px; }
   .landing-home .actions button { height: 58px; font-size: 14px; }
   .hero-table-card {
