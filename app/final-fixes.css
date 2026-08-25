@@ -17,6 +17,43 @@
   opacity: .56;
 }
 
+/* Blueprint Lady Justice is a homepage-only atmospheric plate. The radial mask
+   keeps the square SVG artboard from reading as a separate panel. */
+.lady-justice-blueprint-bg { display: none; }
+.landing-home .balance-scale-bg { display: none; }
+.landing-home .lady-justice-blueprint-bg {
+  display: block;
+  left: 50%;
+  top: 52%;
+  width: min(90vw, 1280px);
+  max-width: none;
+  height: auto;
+  opacity: .46;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  filter: contrast(1.06) saturate(.72);
+  -webkit-mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
+  mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
+}
+
+@media (max-width: 920px) {
+  .landing-home .lady-justice-blueprint-bg {
+    left: 54%;
+    top: 54%;
+    width: 138vw;
+    opacity: .4;
+  }
+}
+
+@media (max-width: 720px) {
+  .landing-home .lady-justice-blueprint-bg {
+    left: 55%;
+    top: 43%;
+    width: 182vw;
+    opacity: .34;
+  }
+}
+
 /* Homepage: one complete, tactile playing card with a deliberate flip. */
 .landing-home .hero {
   max-width: min(720px, 48vw);

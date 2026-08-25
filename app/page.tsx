@@ -284,7 +284,7 @@ export default function Home() {
   );
 }
 
-function BorderlandAtmosphere(){return <div className="borderland-atmosphere" aria-hidden="true"><img className="balance-scale-bg" src="/balance-scale.svg" alt=""/><img className="borderland-crossing" src="/borderland-crossing.svg" alt=""/><img className="borderland-gate" src="/borderland-gate.svg" alt=""/><img className="borderland-visa" src="/borderland-visa.svg" alt=""/></div>}
+function BorderlandAtmosphere(){return <div className="borderland-atmosphere" aria-hidden="true"><img className="balance-scale-bg" src="/balance-scale.svg" alt=""/><img className="lady-justice-blueprint-bg" src="/median-lady-justice-blueprint.svg" alt=""/><img className="borderland-crossing" src="/borderland-crossing.svg" alt=""/><img className="borderland-gate" src="/borderland-gate.svg" alt=""/><img className="borderland-visa" src="/borderland-visa.svg" alt=""/></div>}
 
 function AnnouncementRehearsal({now,soundOn,toggleSound,tone}:{now:number;soundOn:boolean;toggleSound:()=>void;tone:(kind:SoundKind)=>void}){
   const [preview,setPreview]=useState<AmendmentPreview|null>(null);
