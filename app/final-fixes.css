@@ -39,12 +39,7 @@
 .game-shell .lady-justice-blueprint-bg { opacity: .34; }
 
 @media (min-width: 921px) {
-  .landing-home .lady-justice-blueprint-bg {
-    left: calc(56.8% + 4px);
-    top: 53%;
-    width: min(82vw, 1160px);
-    opacity: .4;
-  }
+  .landing-home .lady-justice-blueprint-bg { opacity: .4; }
 }
 
 @media (max-width: 920px) {
@@ -73,9 +68,6 @@
     filter: brightness(1.32) contrast(1.2) saturate(.62) drop-shadow(0 0 22px #e2f2ff52);
   }
   .landing-home .lady-justice-blueprint-bg {
-    left: 52%;
-    top: min(70svh, 590px);
-    width: min(126vw, 520px);
     opacity: .68;
     -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
     mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
