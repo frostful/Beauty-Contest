@@ -36,6 +36,23 @@ strategies, elimination ceremonies, and a final King of Diamonds coronation.
 > Netflix or the creators, publishers, or rights holders of *Alice in
 > Borderland*.
 
+## Gameplay
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/gameplay-select.jpg" alt="Median number-selection round with timer, number slider, player status, and Lady Justice blueprint background" />
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/gameplay-result.jpg" alt="Median resolved round showing player choices, calculated average, target value, and round winner" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><sub><strong>Select</strong> — choose and lock a number from 0–100.</sub></td>
+    <td align="center"><sub><strong>Resolve</strong> — compare every choice against the calculated target.</sub></td>
+  </tr>
+</table>
+
 ## What is included
 
 - Five-seat private rooms with short invite codes
