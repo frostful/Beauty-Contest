@@ -19,9 +19,9 @@
 
 /* Homepage: one complete, tactile playing card with a deliberate flip. */
 .landing-home .hero {
-  max-width: min(700px, 50vw);
+  max-width: min(720px, 48vw);
   margin-left: clamp(44px, 10vw, 184px);
-  padding: clamp(70px, 9vh, 104px) 0 132px;
+  padding: clamp(62px, 8vh, 92px) 0 132px;
 }
 .hero h1 {
   width: max-content;
@@ -82,15 +82,15 @@
 .landing-home .actions .secondary:focus-visible { border-color: #d3d0c7; background: #15171a; }
 .hero-table-card {
   position: absolute;
-  right: clamp(28px, 5.2vw, 88px);
-  top: calc(50% + 34px);
-  width: clamp(340px, 31vw, 440px);
+  right: clamp(20px, 4vw, 72px);
+  top: calc(50% - 10px);
+  width: clamp(410px, 35vw, 520px);
   aspect-ratio: 5 / 7;
   display: block;
   padding: 0;
   border: 0;
   background: transparent;
-  transform: translateY(-50%) rotate(-2.6deg) perspective(1100px) rotateY(5deg);
+  transform: translateY(-50%) rotate(2.1deg) perspective(1200px) rotateY(-4deg);
   overflow: visible;
   perspective: 1200px;
   cursor: pointer;
@@ -102,7 +102,7 @@
   display: block;
   transform-style: preserve-3d;
   transition: transform .76s cubic-bezier(.2,.74,.18,1);
-  filter: drop-shadow(22px 28px 0 #050506) drop-shadow(0 0 26px #e51b2330) drop-shadow(1px 1px 0 #6a1e24);
+  filter: drop-shadow(24px 30px 0 #050506) drop-shadow(-9px 3px 30px #e51b2338) drop-shadow(1px 1px 0 #6a1e24);
 }
 .hero-table-card.is-flipped .hero-card-inner { transform: rotateY(180deg); }
 .hero-card-face {
@@ -139,8 +139,39 @@
 .hero-card-face.back img { width: 31%; max-height: 42%; object-fit: contain; }
 .hero-card-face.back b { position: absolute; top: 22%; font: 800 34px var(--font-display); }
 .hero-card-face.back small { position: absolute; bottom: 22%; font-size: 9px; letter-spacing: .17em; color: #b7b4ab; }
-.hero-table-card:hover .hero-card-inner { filter: drop-shadow(22px 28px 0 #050506) drop-shadow(0 0 42px #e51b2348) drop-shadow(1px 1px 0 #6a1e24); }
+.hero-table-card:hover .hero-card-inner { filter: drop-shadow(24px 30px 0 #050506) drop-shadow(-10px 3px 48px #e51b2355) drop-shadow(1px 1px 0 #6a1e24); }
 .hero-table-card:focus-visible { outline: 2px solid var(--red); outline-offset: 12px; }
+
+/* Keep the court card and wordmark as two balanced halves on ordinary laptops. */
+@media (min-width: 921px) and (max-width: 1399px) {
+  .landing-home .hero {
+    max-width: 52vw;
+    margin-left: clamp(40px, 5vw, 76px);
+  }
+  .landing-home .hero h1 { font-size: clamp(58px, 6.25vw, 82px); }
+  .hero-table-card {
+    right: clamp(24px, 3vw, 44px);
+    width: clamp(360px, 34vw, 455px);
+  }
+}
+
+/* A narrow landscape/tablet view needs the same hierarchy without a squeezed card. */
+@media (min-width: 721px) and (max-width: 920px) {
+  .landing-home .hero {
+    max-width: 100%;
+    margin: 0 9vw;
+    padding-bottom: 36px;
+  }
+  .landing-home .hero h1 { font-size: clamp(58px, 10.5vw, 82px); }
+  .hero-table-card {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: min(62vw, 430px);
+    margin: 6px auto 92px;
+    transform: rotate(1.5deg) perspective(1000px) rotateY(-3deg);
+  }
+}
 .topbar .home-tabs {
   position: static;
   transform: none;
@@ -365,6 +396,15 @@
   outline: none;
 }
 .result-ledger-shell .result-ledger { border: 0; }
+.choice-rail[data-count="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.choice-rail[data-count="5"] > div:nth-child(5) { border-right: 0; }
+.result-ledger[data-count="5"] > button:last-child {
+  grid-column: 1 / -1;
+  width: 50%;
+  justify-self: center;
+  border-left: 1px solid #292c30;
+  border-right: 1px solid #292c30;
+}
 .ledger-toggle {
   width: 100%;
   min-height: 46px;
@@ -406,6 +446,10 @@
 }
 
 @media (max-width: 1000px) {
+  .choice-rail[data-count="5"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .choice-rail[data-count="5"] > div { grid-column: span 2; }
+  .choice-rail[data-count="5"] > div:nth-child(4) { grid-column: 2 / span 2; }
+  .choice-rail[data-count="5"] > div:nth-child(5) { grid-column: 4 / span 2; }
   .arena {
     grid-template-columns: 180px minmax(0, 1fr);
     grid-template-rows: auto auto;
@@ -416,6 +460,21 @@
 }
 
 @media (max-width: 720px) {
+  .choice-rail[data-count="5"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choice-rail[data-count="5"] > div { grid-column: auto; }
+  .choice-rail[data-count="5"] > div:nth-child(5) {
+    grid-column: 1 / -1;
+    width: 50%;
+    justify-self: center;
+    border-left: 1px solid #2c2f34;
+    border-right: 1px solid #2c2f34;
+  }
+  .result-ledger[data-count="5"] > button:last-child {
+    grid-column: auto;
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+  }
   .shell::after,
   .game-shell::before {
     background-size: 30px 30px !important;

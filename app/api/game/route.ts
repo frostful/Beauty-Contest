@@ -127,7 +127,10 @@ const RULE_BRIEFING_DURATIONS:Record<RuleAmendmentId,number>={
 // its narration before the shared presentation clock begins. Without this
 // lead-in, polling and media startup latency makes the first beats appear to
 // have already happened when the announcement mounts.
-const RULE_BRIEFING_PREROLL_MS=4000;
+// Narration is warmed in the client and the WebSocket invalidation arrives
+// immediately, so two seconds is enough for a connected browser to mount and
+// decode the clip without making the between-round transition feel stalled.
+const RULE_BRIEFING_PREROLL_MS=2000;
 
 function briefingIds(message: string | null): RuleAmendmentId[] {
   if (!message?.startsWith("briefing:")) return [];

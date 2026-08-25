@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 type Player = { id:string; name:string; avatar:string; isHost:boolean; isBot:boolean; score:number; alive:boolean; submitted:boolean; pick:number|null; invalid:boolean; roundDelta:number; online:boolean };
 type Spectator = { id:string; name:string; avatar:string; online:boolean };
@@ -176,7 +177,17 @@ export default function Home() {
     };
   },[session,refresh]);
   useEffect(()=>{if(!session)return;const reconnect=()=>refresh(false);const visible=()=>{if(document.visibilityState==="visible")refresh(true);};window.addEventListener("online",reconnect);document.addEventListener("visibilitychange",visible);return()=>{window.removeEventListener("online",reconnect);document.removeEventListener("visibilitychange",visible);};},[session,refresh]);
-  useEffect(() => { const id=setInterval(()=>setNow(Date.now()),250); return()=>clearInterval(id); },[]);
+  // The shared clock only drives second-level interface copy. Animation scenes
+  // keep their own local frame clock so the entire game shell is not repainted
+  // four times a second.
+  useEffect(() => { const id=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(id); },[]);
+  useEffect(()=>{
+    const warmNarration=()=>Object.values(RULE_AMENDMENTS).forEach(amendment=>{
+      void fetch(amendment.audioSrc,{cache:"force-cache"}).catch(()=>undefined);
+    });
+    const idle=window.setTimeout(warmNarration,700);
+    return()=>window.clearTimeout(idle);
+  },[]);
 
   useEffect(()=>{
     if(!state)return;
@@ -286,7 +297,7 @@ function AnnouncementRehearsal({now,soundOn,toggleSound,tone}:{now:number;soundO
   },[loop,preview]);
   return <main className="game-shell announcement-lab">
     <div className="grain" aria-hidden="true"/><div className="suit-field" aria-hidden="true"/><BorderlandAtmosphere/>
-    <header className="announcement-lab-head"><div><img src="/king-diamond.svg" alt=""/><span><small>INTERNAL TEST CHANNEL</small><strong>ANNOUNCEMENT REHEARSAL</strong></span></div><a href="/">RETURN TO SITE →</a></header>
+    <header className="announcement-lab-head"><div><img src="/king-diamond.svg" alt=""/><span><small>INTERNAL TEST CHANNEL</small><strong>ANNOUNCEMENT REHEARSAL</strong></span></div><Link href="/">RETURN TO SITE →</Link></header>
     <nav className="announcement-lab-console" aria-label="Choose an announcement to rehearse">
       <div className="lab-announcement-list">{(Object.keys(RULE_AMENDMENTS) as RuleAmendmentId[]).map(id=><button className={preview?.id===id?"active":""} onClick={()=>launch(id)} key={id}><b>{RULE_AMENDMENTS[id].number}</b><span>{RULE_AMENDMENTS[id].title}</span></button>)}</div>
       <div className="lab-playback"><button onClick={toggleSound}>{soundOn?"SOUND ON":"ENABLE SOUND"}</button><button className={loop?"active":""} aria-pressed={loop} onClick={()=>setLoop(value=>!value)}>LOOP {loop?"ON":"OFF"}</button>{preview&&<button onClick={()=>launch(preview.id)}>REPLAY ↻</button>}</div>
@@ -305,7 +316,7 @@ const AMENDMENT_CUES:Record<RuleAmendmentId,[number,number,number]>={
 
 function AmendmentVisual({id,step,mentionZero=false,mentionHundred=false}:{id:RuleAmendmentId;step:number;mentionZero?:boolean;mentionHundred?:boolean}){
   const amendment=RULE_AMENDMENTS[id];
-  const intro=id==="hundred_zero"?"FINAL RULE AMENDMENT":id==="consecutive_tie"?"DEADLOCK PROTOCOL":`RULE AMENDMENT ${amendment.number} / 05`;
+  const intro=id==="hundred_zero"?<>FINAL RULE <br className="story-title-break"/>AMENDMENT</>:id==="consecutive_tie"?"DEADLOCK PROTOCOL":<>RULE <br className="story-title-break"/>AMENDMENT <br className="story-title-break"/>{amendment.number} / 05</>;
   return <div className={`amendment-story story-${id} story-step-${step} ${mentionZero?"mention-zero":""} ${mentionHundred?"mention-hundred":""}`}>
     <div className="story-title"><small>K♦ / TABLE AUTHORITY</small><h2>{intro}</h2><span>{amendment.title}</span></div>
     <div className="story-example" aria-hidden="true">
@@ -345,9 +356,32 @@ function AmendmentVisual({id,step,mentionZero=false,mentionHundred=false}:{id:Ru
 }
 
 function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameState;preview?:AmendmentPreview;now:number;soundOn:boolean;tone:(kind:SoundKind)=>void}) {
+  const clockAnchor=useRef({server:now,client:0});
+  const [renderNow,setRenderNow]=useState(now);
+  useEffect(()=>{
+    let frame=0;
+    let lastPaint=0;
+    const tick=(timestamp:number)=>{
+      if(clockAnchor.current.client===0)clockAnchor.current.client=performance.now();
+      if(timestamp-lastPaint>=50){
+        lastPaint=timestamp;
+        const anchor=clockAnchor.current;
+        setRenderNow(anchor.server+(performance.now()-anchor.client));
+      }
+      frame=requestAnimationFrame(tick);
+    };
+    frame=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(frame);
+  },[]);
+  useEffect(()=>{
+    const anchor=clockAnchor.current;
+    const estimated=anchor.server+(performance.now()-anchor.client);
+    if(Math.abs(now-estimated)>1200)clockAnchor.current={server:now,client:performance.now()};
+  },[now]);
+  const currentNow=renderNow;
   const ids=preview?[preview.id]:state?.room.amendmentIds.length?state.room.amendmentIds:["duplicates_void" as RuleAmendmentId];
-  const startedAt=preview?.startedAt??state?.room.briefingStartedAt??now;
-  const elapsed=Math.max(0,now-startedAt);
+  const startedAt=preview?.startedAt??state?.room.briefingStartedAt??currentNow;
+  const elapsed=Math.max(0,currentNow-startedAt);
   let elapsedBeforeActive=0;
   let activeIndex=ids.length-1;
   let cursor=0;
@@ -361,24 +395,26 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
   const itemElapsed=Math.max(0,elapsed-elapsedBeforeActive);
   const serverProgress=Math.max(0,Math.min(1,itemElapsed/amendment.duration));
   const itemStartsAt=startedAt+elapsedBeforeActive;
-  const endsAt=preview?preview.startedAt+amendment.duration:state?.room.briefingEndsAt??now;
-  const seconds=Math.max(0,Math.ceil((endsAt-now)/1000));
+  const endsAt=preview?preview.startedAt+amendment.duration:state?.room.briefingEndsAt??currentNow;
+  const seconds=Math.max(0,Math.ceil((endsAt-currentNow)/1000));
   const [voiceClock,setVoiceClock]=useState<{id:RuleAmendmentId|"";current:number;duration:number;playing:boolean;mode:"idle"|"loading"|"voice"|"fallback";fallbackStartedAt:number}>({id:"",current:0,duration:0,playing:false,mode:"idle",fallbackStartedAt:0});
 
   useEffect(()=>{
-    if(!soundOn){setVoiceClock({id:activeId,current:0,duration:0,playing:false,mode:"idle",fallbackStartedAt:0});return;}
+    if(!soundOn)return;
     const audio=new Audio(amendment.audioSrc);
     audio.preload="auto";
     let cancelled=false;
     let started=false;
     let mediaReady=false;
+    let syncTimer=0;
     const timers:number[]=[];
     // Anchor the server-authored start time to this browser once. Clock skew
     // and later polling updates cannot make the local presentation jump.
-    const clientStartAt=Date.now()+Math.max(0,itemStartsAt-now);
+    const clientStartAt=Date.now()+Math.max(0,itemStartsAt-currentNow);
     const estimatedServerNow=()=>itemStartsAt+Math.max(0,Date.now()-clientStartAt);
     const later=(callback:()=>void,delay:number)=>{timers.push(window.setTimeout(callback,Math.max(0,delay)));};
     const sync=()=>setVoiceClock({id:activeId,current:audio.currentTime,duration:Number.isFinite(audio.duration)?audio.duration:amendment.duration/1000,playing:!audio.paused,mode:"voice",fallbackStartedAt:0});
+    const startSync=()=>{if(!syncTimer)syncTimer=window.setInterval(sync,50);};
     const beginFallback=()=>{
       if(cancelled||started)return;
       if(Date.now()<clientStartAt){later(beginFallback,clientStartAt-Date.now());return;}
@@ -391,7 +427,7 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
       if(Date.now()<clientStartAt){later(beginVoice,clientStartAt-Date.now());return;}
       started=true;
       audio.currentTime=0;
-      audio.play().then(sync).catch(()=>{started=false;beginFallback();});
+      audio.play().then(()=>{startSync();sync();}).catch(()=>{started=false;beginFallback();});
     };
     const ready=()=>{mediaReady=true;beginVoice();};
     setVoiceClock({id:activeId,current:0,duration:0,playing:false,mode:"loading",fallbackStartedAt:0});
@@ -407,13 +443,13 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
     // If decoding or autoplay stalls, start the visual fallback shortly after
     // the scheduled beat instead of leaving the player on a frozen frame.
     later(beginFallback,clientStartAt-Date.now()+1500);
-    return()=>{cancelled=true;timers.forEach(timer=>window.clearTimeout(timer));audio.removeEventListener("canplay",ready);audio.removeEventListener("canplaythrough",ready);audio.removeEventListener("timeupdate",sync);audio.removeEventListener("play",sync);audio.removeEventListener("pause",sync);audio.removeEventListener("ended",sync);audio.removeEventListener("error",beginFallback);audio.pause();};
+    return()=>{cancelled=true;timers.forEach(timer=>window.clearTimeout(timer));if(syncTimer)window.clearInterval(syncTimer);audio.removeEventListener("canplay",ready);audio.removeEventListener("canplaythrough",ready);audio.removeEventListener("timeupdate",sync);audio.removeEventListener("play",sync);audio.removeEventListener("pause",sync);audio.removeEventListener("ended",sync);audio.removeEventListener("error",beginFallback);audio.pause();};
   // Each amendment receives one locally anchored narration attempt.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[activeId,itemStartsAt,soundOn,tone]);
 
   const voiceProgress=voiceClock.id===activeId&&voiceClock.duration>0?voiceClock.current/voiceClock.duration:0;
-  const fallbackProgress=voiceClock.id===activeId&&voiceClock.mode==="fallback"?Math.max(0,(now-voiceClock.fallbackStartedAt)/amendment.duration):0;
+  const fallbackProgress=voiceClock.id===activeId&&voiceClock.mode==="fallback"?Math.max(0,(currentNow-voiceClock.fallbackStartedAt)/amendment.duration):0;
   // With narration enabled, visuals stay at frame zero until media is ready
   // and the scheduled start arrives. They never reveal elapsed beats first.
   const progress=soundOn
@@ -424,7 +460,7 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
   const mentionZero=activeId==="hundred_zero"&&((progress>=.14&&progress<.29)||progress>=.83);
   const mentionHundred=activeId==="hundred_zero"&&((progress>=.29&&progress<.53)||(progress>=.60&&progress<.83));
 
-  return <section className={`rule-amendment-stage kinetic-amendment amendment-${activeId} beat-${beat} ${voiceClock.playing?"voice-playing":""} ${now<itemStartsAt||voiceClock.mode==="loading"?"announcement-preparing":""}`} style={{"--voice-progress":progress} as React.CSSProperties} aria-live="assertive" aria-label={`Rule amendment: ${amendment.title}`}>
+  return <section className={`rule-amendment-stage kinetic-amendment amendment-${activeId} beat-${beat} ${soundOn&&voiceClock.playing?"voice-playing":""} ${currentNow<itemStartsAt||voiceClock.mode==="loading"?"announcement-preparing":""}`} style={{"--voice-progress":progress} as React.CSSProperties} aria-live="assertive" aria-label={`Rule amendment: ${amendment.title}`}>
     <div className="amendment-scan" aria-hidden="true"/>
     <header className="amendment-head"><span>{preview?"REHEARSAL":`ROUND ${String(state?.room.round??0).padStart(2,"0")}`}</span><b>TABLE AMENDMENT</b><small>{preview?`TRANSMISSION · ${seconds}s`:`SELECTION OPENS IN ${seconds}s`}</small></header>
     <AmendmentVisual id={activeId} step={beat} mentionZero={mentionZero} mentionHundred={mentionHundred}/>
@@ -449,13 +485,13 @@ function Landing(p:{screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"r
   return <main className={`shell landing-${p.screen}`}><Frame screen={p.screen} setScreen={p.setScreen}>
     {p.screen==="rules"?<RulesDeck play={()=>p.setScreen("create")}/>:p.screen==="home"?<><section className="hero"><h1><span className="title-the">THE</span><span className="title-beauty">BEAUTY</span><em>CONTEST</em></h1><p className="lede">Choose a number. Read the room. Survive the average.</p>
       <div className="actions"><button className="primary" onClick={()=>p.setScreen("create")}><span>CREATE ROOM</span><b>↗</b></button><button className="secondary" onClick={()=>p.setScreen("join")}>JOIN WITH CODE</button></div>
-    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Classic King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>Unofficial fan-made game · Not affiliated with Netflix</span></nav></footer></>:
+    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Classic King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><span>Unofficial fan-made game · Not affiliated with Netflix</span></nav></footer></>:
       <section className="entry-stage"><form className="entry-panel" onSubmit={p.enter}><button type="button" className="back" onClick={()=>p.setScreen("home")}>←</button><span className="form-kicker">{p.screen==="create"?"NEW FIVE-SEAT MATCH":"ENTER PROTOCOL"}</span>
-        {p.screen==="join"&&<label>ROOM CODE<input value={p.code} onChange={e=>p.setCode(e.target.value.replace(/[^a-z]/gi,"").toUpperCase())} required minLength={4} maxLength={4} pattern="[A-Za-z]{4}" placeholder="KJRM" autoFocus/></label>}
-        <label>PLAYER NAME<input value={p.name} onChange={e=>p.setName(e.target.value)} required maxLength={18} placeholder="YOUR ALIAS" autoFocus={p.screen==="create"}/></label>
+        {p.screen==="join"&&<label>ROOM CODE<input value={p.code} onChange={e=>p.setCode(e.target.value.replace(/[^a-z]/gi,"").toUpperCase())} required minLength={4} maxLength={4} pattern="[A-Za-z]{4}" placeholder="KJRM"/></label>}
+        <label>PLAYER NAME<input value={p.name} onChange={e=>p.setName(e.target.value)} required maxLength={18} placeholder="YOUR ALIAS"/></label>
         <div className="avatar-picker"><span>CHOOSE PROFILE</span><div>{AVATAR_OPTIONS.map(option=><button type="button" aria-label={`Choose ${option.label} profile`} aria-pressed={p.avatar===option.id} className={p.avatar===option.id?"selected":""} onClick={()=>p.setAvatar(option.id)} key={option.id}><AvatarBadge avatar={option.id}/><small>{option.label}</small></button>)}</div></div>
         {p.screen==="create"&&<div className="timer-pick"><span>ROUND TIMER</span><div>{[[30,"30 SEC"],[60,"1 MIN"],[180,"3 MIN · SERIES"]].map(([v,l])=><button type="button" className={p.seconds===v?"active":""} key={v} onClick={()=>p.setSeconds(Number(v))}>{l}</button>)}</div></div>}
-        {p.error&&<p className="form-error">{p.error}</p>}{p.screen==="create"?<button className="enter-btn" disabled={p.busy}>{p.busy?"CONNECTING…":"CREATE ROOM  →"}</button>:<div className="join-actions"><button className="enter-btn" value="join" disabled={p.busy}>{p.busy?"CONNECTING…":"JOIN TO PLAY  →"}</button><button className="spectator-enter" value="spectate" disabled={p.busy}>WATCH AS SPECTATOR ◉</button></div>}<p className="entry-legal">By entering, you agree to the <a href="/terms">Terms</a> and acknowledge the <a href="/privacy">Privacy Policy</a>. Use an alias—not your real name.</p>
+        {p.error&&<p className="form-error">{p.error}</p>}{p.screen==="create"?<button className="enter-btn" disabled={p.busy}>{p.busy?"CONNECTING…":"CREATE ROOM  →"}</button>:<div className="join-actions"><button className="enter-btn" value="join" disabled={p.busy}>{p.busy?"CONNECTING…":"JOIN TO PLAY  →"}</button><button className="spectator-enter" value="spectate" disabled={p.busy}>WATCH AS SPECTATOR ◉</button></div>}<p className="entry-legal">By entering, you agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Policy</Link>. Use an alias—not your real name.</p>
       </form></section>}
   </Frame></main>;
 }
@@ -638,7 +674,7 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
       </nav>
 
       <div ref={machineRef} tabIndex={-1} className="ceremony-machine">
-        {phase===0&&<div className="choice-rail" aria-label="Submitted choices">
+        {phase===0&&<div className="choice-rail" data-count={participants.length} aria-label="Submitted choices">
           {participants.map((player,index)=><div className={`${index===activeTransfer?"active":""} ${index<arrivedCount?"loaded":""}`} key={player.id}><AvatarBadge avatar={player.avatar}/><span>{player.name}</span><b>{player.pick}</b></div>)}
         </div>}
         {phase===0&&activeTransfer>=0&&<div key={activeTransfer} className="traveling-choice" aria-hidden="true">{participants[activeTransfer]?.pick}</div>}
@@ -674,7 +710,7 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
       </div>}
 
       {final&&<div ref={ledgerRef} tabIndex={-1} className={`result-ledger-shell ${ledgerExpanded?"is-expanded":"is-compact"}`} aria-label="Round scores">
-        <div className="result-ledger">
+        <div className="result-ledger" data-count={visibleScores.length}>
         {visibleScores.map((player,index)=>{const outcomeWinner=!eliminatedIds.has(player.id)&&!player.invalid&&(player.id===state.room.winnerId||tiedIds.has(player.id));return <button onClick={()=>setSelectedId(player.id)} className={`${player.id===state.me.id?"self":""} ${outcomeWinner?"winner":""} ${eliminatedIds.has(player.id)?"eliminated":""}`} key={player.id}>
           <span>{String(index+1).padStart(2,"0")}</span><AvatarBadge avatar={player.avatar}/><strong>{player.name}{player.id===state.me.id&&<small>YOU</small>}</strong><b>{player.pick}</b><em>Δ {Math.abs((player.pick??0)-finalTarget).toFixed(2)}</em><i><small>ROUND</small><b>{player.roundDelta>0?"+":""}{player.roundDelta}</b><small>TOTAL</small><b>{player.score}</b></i>
         </button>})}

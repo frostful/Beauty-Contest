@@ -16,7 +16,7 @@ export async function notifyRoom(code: string) {
   const stub = roomStub(code);
   if (!stub) return false;
   try {
-    await stub.fetch(new Request("https://room.internal/notify", { method: "POST" }));
+    await stub.fetch(new Request(`https://room.internal/notify?code=${encodeURIComponent(code)}`, { method: "POST" }));
     return true;
   } catch {
     // Sites previews do not provide this optional binding. HTTP fallback stays functional.
@@ -28,7 +28,7 @@ export async function getOnlineTokens(code: string): Promise<Set<string> | null>
   const stub = roomStub(code);
   if (!stub) return null;
   try {
-    const response = await stub.fetch(new Request("https://room.internal/connections"));
+    const response = await stub.fetch(new Request(`https://room.internal/connections?code=${encodeURIComponent(code)}`));
     if (!response.ok) return null;
     const data = await response.json() as { tokens?: string[] };
     return new Set(data.tokens ?? []);
