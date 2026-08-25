@@ -57,6 +57,14 @@
 }
 
 @media (max-width: 720px) {
+  /* On game screens the blueprint belongs to the page, not the viewport.
+     A small-viewport-height canvas avoids Chrome's collapsing address bar
+     nudging Lady Justice while the player scrolls. */
+  .game-shell .borderland-atmosphere {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 100svh;
+  }
   .lady-justice-blueprint-bg {
     left: 50%;
     top: 54%;
@@ -637,6 +645,15 @@
   .arena .choice-zone { grid-column: 1; grid-row: 1; }
   .arena .timer { grid-column: 1; grid-row: 2; justify-self: center; }
   .arena .player-feed { grid-column: 1; grid-row: 3; }
+  .choice-zone h2 {
+    max-width: 100%;
+    margin-inline: auto;
+    font-size: clamp(40px, 12.5vw, 54px);
+    line-height: .86;
+    white-space: pre-line;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
   .lock-btn { width: min(100%, 390px); }
   .traditional-scale { height: 205px; }
   .scale-beam { left: 15%; right: 15%; top: 42px; }
