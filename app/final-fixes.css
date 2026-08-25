@@ -57,8 +57,8 @@
   }
   .landing-home .lady-justice-blueprint-bg {
     left: 50%;
-    top: 66%;
-    width: min(158vw, 620px);
+    top: 70%;
+    width: min(126vw, 520px);
     opacity: .68;
     -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
     mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
