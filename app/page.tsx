@@ -485,7 +485,7 @@ function Landing(p:{screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"r
   return <main className={`shell landing-${p.screen}`}><Frame screen={p.screen} setScreen={p.setScreen}>
     {p.screen==="rules"?<RulesDeck play={()=>p.setScreen("create")}/>:p.screen==="home"?<><section className="hero"><h1><span className="title-the">THE</span><span className="title-beauty">BEAUTY</span><em>CONTEST</em></h1><p className="lede">Choose a number. Read the room. Survive the average.</p>
       <div className="actions"><button className="primary" onClick={()=>p.setScreen("create")}><span>CREATE ROOM</span><b>↗</b></button><button className="secondary" onClick={()=>p.setScreen("join")}>JOIN WITH CODE</button></div>
-    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Classic King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><span>Unofficial fan-made game · Not affiliated with Netflix</span></nav></footer></>:
+    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card-classic.webp" alt="Classy vintage King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><span>Unofficial fan-made game · Not affiliated with Netflix</span></nav></footer></>:
       <section className="entry-stage"><form className="entry-panel" onSubmit={p.enter}><button type="button" className="back" onClick={()=>p.setScreen("home")}>←</button><span className="form-kicker">{p.screen==="create"?"NEW FIVE-SEAT MATCH":"ENTER PROTOCOL"}</span>
         {p.screen==="join"&&<label>ROOM CODE<input value={p.code} onChange={e=>p.setCode(e.target.value.replace(/[^a-z]/gi,"").toUpperCase())} required minLength={4} maxLength={4} pattern="[A-Za-z]{4}" placeholder="KJRM"/></label>}
         <label>PLAYER NAME<input value={p.name} onChange={e=>p.setName(e.target.value)} required maxLength={18} placeholder="YOUR ALIAS"/></label>
@@ -498,10 +498,10 @@ function Landing(p:{screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"r
 
 function RulesDeck({play}:{play:()=>void}) {
   const cards=[
-    {rank:"A",step:"01 / 04",kind:"select",title:"SELECT",copy:"Choose one whole number from 0–100."},
-    {rank:"J",step:"02 / 04",kind:"calculate",title:"CALCULATE",copy:"Find the average of all valid choices."},
-    {rank:"Q",step:"03 / 04",kind:"target",title:"TARGET",copy:"Multiply the average by 0.8."},
-    {rank:"K",step:"04 / 04",kind:"survive",title:"SURVIVE",copy:"Closest gains 1 point. Everyone else loses 1."},
+    {rank:"A",step:"01 / 04",kind:"select",title:"SELECT",copy:"Choose one whole number between 0 and 100."},
+    {rank:"J",step:"02 / 04",kind:"calculate",title:"CALCULATE",copy:"Add every valid choice, then divide by the number of players."},
+    {rank:"Q",step:"03 / 04",kind:"target",title:"TARGET",copy:"Multiply the average by 0.8 to set the target."},
+    {rank:"K",step:"04 / 04",kind:"survive",title:"SURVIVE",copy:"The closest player gains 1 point. Every other player loses 1 point."},
   ];
   const diagram=(kind:string)=>{
     if(kind==="select")return <div className="rule-diagram select-diagram" aria-label="A number line from zero to one hundred with thirty-seven selected"><small>YOUR CHOICE</small><div><span>0</span><i><b/></i><span>100</span></div><strong>37</strong></div>;

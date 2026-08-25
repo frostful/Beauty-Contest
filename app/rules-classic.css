@@ -1,9 +1,28 @@
-.classic-rules { padding-bottom: 130px; }
+.classic-rules {
+  --classic-card-gap: clamp(16px, 2vw, 30px);
+  padding-bottom: 130px;
+}
+
+/* The protocol note aligns with the K♦ column and reads like a margin rule. */
+.classic-rules .rules-intro {
+  grid-template-columns: minmax(0, 3fr) minmax(215px, 1fr);
+  column-gap: var(--classic-card-gap);
+}
+.classic-rules .rules-intro p {
+  max-width: none;
+  margin: 0;
+  padding: 2px 0 2px 18px;
+  border-left: 3px solid var(--red);
+  color: #c5c3bc;
+  font-size: clamp(15px, 1.05vw, 17px);
+  font-weight: 500;
+  line-height: 1.55;
+}
 
 .classic-rules-deck {
   display: grid;
   grid-template-columns: repeat(4, minmax(215px, 1fr));
-  gap: clamp(16px, 2vw, 30px);
+  gap: var(--classic-card-gap);
   margin-top: 34px;
   perspective: 1200px;
 }
@@ -54,7 +73,7 @@
   left: 50%;
   translate: -50% 0;
   color: #8b7869;
-  font: 700 9px var(--font-body);
+  font: 700 11px var(--font-body);
   letter-spacing: .18em;
   white-space: nowrap;
 }
@@ -78,14 +97,14 @@
 .classic-rule-copy h3 {
   margin: 0 0 7px;
   color: #181310;
-  font: 700 clamp(20px, 1.65vw, 27px) Georgia, "Times New Roman", serif;
+  font: 700 clamp(25px, 1.8vw, 31px) Georgia, "Times New Roman", serif;
   letter-spacing: .04em;
 }
-.classic-rule-copy p { margin: 0; color: #55483e; font: 500 12px/1.45 var(--font-body); }
+.classic-rule-copy p { margin: 0; color: #44372f; font: 550 14px/1.5 var(--font-body); }
 
 /* A♦ — an interactive-choice composition. */
 .select-diagram { padding-top: 8px; text-align: center; }
-.select-diagram > small { margin-bottom: 25px; color: #8e7765; font: 700 9px var(--font-body); letter-spacing: .2em; }
+.select-diagram > small { margin-bottom: 25px; color: #725f50; font: 700 11px var(--font-body); letter-spacing: .16em; }
 .select-diagram > div { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; color: #5b4c41; font: 700 12px Georgia, serif; }
 .select-diagram > div i { position: relative; display: block; height: 2px; background: #79695d; }
 .select-diagram > div i::before,
@@ -124,11 +143,11 @@
 }
 .survive-card::before { border-width: 2px; }
 .survive-diagram { align-content: center; text-align: center; }
-.survive-diagram > small { margin-bottom: 11px; color: #a6191d; font: 800 9px var(--font-body); letter-spacing: .18em; }
+.survive-diagram > small { margin-bottom: 11px; color: #a6191d; font: 800 11px var(--font-body); letter-spacing: .16em; }
 .survive-diagram > div { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
 .survive-diagram > div span { min-width: 30px; padding: 8px 3px; border-bottom: 1px solid #9f9184; color: #54463c; font: 600 18px Georgia, serif; }
 .survive-diagram > div .closest { border: 1px solid #a6191d; border-radius: 50%; color: #fffaf0; background: #a6191d; font-size: 24px; box-shadow: 0 0 0 4px #a6191d20, 0 8px 18px #6f121530; }
-.survive-diagram > strong { margin-top: 19px; color: #a6191d; font: 800 10px var(--font-body); letter-spacing: .24em; }
+.survive-diagram > strong { margin-top: 19px; color: #a6191d; font: 800 12px var(--font-body); letter-spacing: .2em; }
 
 @keyframes classicCardDeal {
   from { opacity: 0; transform: translateY(70px) rotateX(14deg) rotate(calc((var(--card-index) - 1.5) * 2deg)); }
@@ -136,6 +155,8 @@
 }
 
 @media (max-width: 1050px) {
+  .classic-rules .rules-intro { grid-template-columns: 1fr; }
+  .classic-rules .rules-intro p { max-width: 560px; margin-top: 24px; }
   .classic-rules-deck { grid-template-columns: repeat(2, minmax(230px, 1fr)); }
   .classic-rule-card { aspect-ratio: 5 / 6; min-height: 350px; }
 }
@@ -147,7 +168,7 @@
   .classic-rules-deck::-webkit-scrollbar { display: none; }
   .classic-rule-card { flex: 0 0 min(82vw, 310px); min-height: 430px; aspect-ratio: 5 / 7; scroll-snap-align: center; }
   .classic-rule-copy h3 { font-size: 27px; }
-  .classic-rule-copy p { font-size: 13px; }
+  .classic-rule-copy p { font-size: 14px; }
   .target-diagram > b { font-size: 49px; }
 }
 
