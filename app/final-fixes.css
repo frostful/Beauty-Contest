@@ -31,7 +31,7 @@
   opacity: .42;
   transform: translate(-50%, -50%);
   mix-blend-mode: screen;
-  filter: brightness(1.28) contrast(1.16) saturate(1.12) drop-shadow(0 0 26px #69c9ff52);
+  filter: brightness(1.24) contrast(1.16) saturate(.64) drop-shadow(0 0 24px #dbefff42);
   -webkit-mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
   mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
 }
@@ -40,7 +40,7 @@
 
 @media (min-width: 921px) {
   .landing-home .lady-justice-blueprint-bg {
-    left: 64%;
+    left: 58%;
     top: 53%;
     width: min(82vw, 1160px);
     opacity: .4;
@@ -62,10 +62,10 @@
     top: 54%;
     width: min(150vw, 600px);
     opacity: .46;
-    filter: brightness(1.38) contrast(1.2) saturate(1.16) drop-shadow(0 0 24px #75d2ff66);
+    filter: brightness(1.32) contrast(1.2) saturate(.62) drop-shadow(0 0 22px #e2f2ff52);
   }
   .landing-home .lady-justice-blueprint-bg {
-    left: 50%;
+    left: 52%;
     top: min(70svh, 590px);
     width: min(126vw, 520px);
     opacity: .68;
@@ -78,7 +78,7 @@
 /* Homepage: one complete, tactile playing card with a deliberate flip. */
 .landing-home .hero {
   max-width: min(720px, 48vw);
-  margin-left: clamp(44px, 10vw, 184px);
+  margin-left: clamp(36px, 8.8vw, 160px);
   padding: clamp(62px, 8vh, 92px) 0 132px;
 }
 .hero h1 {
@@ -210,7 +210,7 @@
 @media (min-width: 921px) and (max-width: 1399px) {
   .landing-home .hero {
     max-width: 52vw;
-    margin-left: clamp(40px, 5vw, 76px);
+    margin-left: clamp(32px, 4.4vw, 66px);
   }
   .landing-home .hero h1 { font-size: clamp(58px, 6.25vw, 82px); }
   .hero-table-card {
