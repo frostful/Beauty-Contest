@@ -12,7 +12,8 @@
     "test": "node --test tests/*.test.mjs",
     "test:live": "node tests/live-smoke.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "WRANGLER_LOG_PATH=.wrangler/migrate.log wrangler d1 migrations apply median-beauty-contest --local"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

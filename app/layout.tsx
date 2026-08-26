@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(origin), title, description,
     icons: { icon: "/favicon.svg" },
-    openGraph: { title, description, type:"website", images:[{url:`${origin}/og.png`,width:1536,height:1024,alt:"Median — The Beauty Contest"}] },
+    openGraph: { title, description, type:"website", images:[{url:`${origin}/og.png`,width:1200,height:630,alt:"Median — The Beauty Contest"}] },
     twitter: { card:"summary_large_image", title, description, images:[`${origin}/og.png`] },
   };
 }

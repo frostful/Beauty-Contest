@@ -1,6 +1,12 @@
 import { getD1 } from "../../../db";
 import { calculateRound } from "../../../lib/round-engine";
 import { getOnlineTokens, notifyRoom } from "../../../lib/realtime";
+import {
+  briefingPlaybackDuration,
+  briefingWindowDuration,
+  parseBriefingIds,
+  type RuleAmendmentId,
+} from "../../../lib/rule-amendments";
 
 export const dynamic = "force-dynamic";
 
@@ -115,29 +121,6 @@ async function getBurnedNumbers(db: D1Database, code: string, round: number) {
   return entries.map(entry => Number(entry.pick));
 }
 
-type RuleAmendmentId = "tie_seal" | "consecutive_tie" | "duplicates_void" | "exact_double" | "hundred_zero";
-const RULE_BRIEFING_DURATIONS:Record<RuleAmendmentId,number>={
-  tie_seal:9000,
-  consecutive_tie:10300,
-  duplicates_void:9500,
-  exact_double:10500,
-  hundred_zero:9300,
-};
-// Give every connected browser time to receive the briefing state and preload
-// its narration before the shared presentation clock begins. Without this
-// lead-in, polling and media startup latency makes the first beats appear to
-// have already happened when the announcement mounts.
-const RULE_BRIEFING_PREROLL_MS=4000;
-
-function briefingIds(message: string | null): RuleAmendmentId[] {
-  if (!message?.startsWith("briefing:")) return [];
-  const valid = new Set<RuleAmendmentId>(["tie_seal","consecutive_tie","duplicates_void","exact_double","hundred_zero"]);
-  return message.slice("briefing:".length).split(",").filter((id): id is RuleAmendmentId => valid.has(id as RuleAmendmentId));
-}
-
-const briefingPlaybackDuration=(ids:RuleAmendmentId[])=>ids.reduce((total,id)=>total+RULE_BRIEFING_DURATIONS[id],0);
-const briefingWindowDuration=(ids:RuleAmendmentId[])=>RULE_BRIEFING_PREROLL_MS+briefingPlaybackDuration(ids);
-
 async function amendmentsForCompletedRound(db:D1Database,room:RoomRow,aliveAfter:number) {
   const amendments:RuleAmendmentId[]=[];
   if(room.winner_name==="TIE"){
@@ -152,10 +135,12 @@ async function amendmentsForCompletedRound(db:D1Database,room:RoomRow,aliveAfter
   ).bind(room.code).first<{count:number}>())?.count??0;
   const eliminatedAfter=Math.max(0,room.initial_players-aliveAfter);
   const eliminatedBefore=Math.max(0,eliminatedAfter-newlyEliminated);
-  const thresholds:[number,RuleAmendmentId][]=[[1,"duplicates_void"],[2,"exact_double"],[3,"hundred_zero"]];
+  const thresholds:[number,RuleAmendmentId][]=[[1,"duplicates_void"],[2,"exact_double"]];
   for(const [threshold,id] of thresholds){
     if(eliminatedBefore<threshold&&eliminatedAfter>=threshold)amendments.push(id);
   }
+  const aliveBefore=aliveAfter+newlyEliminated;
+  if(aliveAfter===2&&aliveBefore>2)amendments.push("hundred_zero");
   return amendments;
 }
 
@@ -256,7 +241,7 @@ async function snapshot(db: D1Database, code: string, callerToken: string, retry
   if (!me) return null;
   const spectators=players.filter(player=>player.token.startsWith("spectator_"));
   const contestants=players.filter(player=>!player.token.startsWith("spectator_"));
-  const amendments=briefingIds(room.message);
+  const amendments=parseBriefingIds(room.message);
   const burnedRound = room.status === "playing" || room.status === "resolving" || room.status === "briefing" ? room.round - 1 : room.round;
   const bannedNumbers = await getBurnedNumbers(db, code, burnedRound);
   const roundChoicesHidden=room.status === "playing" || room.status === "resolving" || room.status === "briefing";
@@ -377,8 +362,11 @@ export async function POST(request: Request) {
     if (!me.is_host || room.status !== "lobby") return json({ error:"Only the host can start this match." }, 403);
     const count = (await db.prepare("SELECT COUNT(*) AS count FROM players WHERE room_code = ? AND token NOT LIKE 'spectator_%'").bind(code).first<{count:number}>())?.count ?? 0;
     if (count < 2) return json({ error:"At least 2 players are required." }, 409);
+    const openingAmendments:RuleAmendmentId[]=count===2?["hundred_zero"]:[];
+    const openingBriefing=openingAmendments.length>0;
     await db.batch([
-      db.prepare("UPDATE rooms SET status='playing', round=1, initial_players=?, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, message=NULL WHERE code=?").bind(count, now + room.round_seconds*1000, code),
+      db.prepare("UPDATE rooms SET status=?, round=1, initial_players=?, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, message=? WHERE code=?")
+        .bind(openingBriefing?"briefing":"playing",count,now+(openingBriefing?briefingWindowDuration(openingAmendments):room.round_seconds*1000),openingBriefing?`briefing:${openingAmendments.join(",")}`:null,code),
       db.prepare("UPDATE players SET score=0, alive=1, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token NOT LIKE 'spectator_%'").bind(code),
       db.prepare("UPDATE players SET score=0, alive=0, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token LIKE 'spectator_%'").bind(code),
     ]);

@@ -17,11 +17,69 @@
   opacity: .56;
 }
 
+/* Blueprint Lady Justice remains present throughout the landing and game flow.
+   The radial mask keeps the square SVG artboard from reading as a panel. */
+.borderland-atmosphere { opacity: 1 !important; }
+.balance-scale-bg { display: none !important; }
+.lady-justice-blueprint-bg {
+  display: block;
+  left: 50%;
+  top: 52%;
+  width: min(90vw, 1280px);
+  max-width: none;
+  height: auto;
+  opacity: .29;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  filter: brightness(1.24) contrast(1.16) saturate(.64) drop-shadow(0 0 24px #dbefff42);
+  -webkit-mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
+  mask-image: radial-gradient(circle at center, #000 32%, #000c 56%, transparent 79%);
+}
+.landing-home .lady-justice-blueprint-bg { opacity: .41; }
+.game-shell .lady-justice-blueprint-bg { opacity: .24; }
+
+@media (min-width: 921px) {
+  .landing-home .lady-justice-blueprint-bg { opacity: .28; }
+}
+
+@media (max-width: 920px) {
+  .lady-justice-blueprint-bg {
+    left: 54%;
+    top: 54%;
+    width: 138vw;
+  }
+  .landing-home .lady-justice-blueprint-bg { opacity: .38; }
+}
+
+@media (max-width: 720px) {
+  /* On game screens the blueprint belongs to the page, not the viewport.
+     A small-viewport-height canvas avoids Chrome's collapsing address bar
+     nudging Lady Justice while the player scrolls. */
+  .game-shell .borderland-atmosphere {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 100svh;
+  }
+  .lady-justice-blueprint-bg {
+    left: 50%;
+    top: 54%;
+    width: min(150vw, 600px);
+    opacity: .32;
+    filter: brightness(1.32) contrast(1.2) saturate(.62) drop-shadow(0 0 22px #e2f2ff52);
+  }
+  .landing-home .lady-justice-blueprint-bg {
+    opacity: .48;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
+    mask-image: radial-gradient(ellipse at center, #000 35%, #000e 60%, transparent 84%);
+  }
+  .game-shell .lady-justice-blueprint-bg { opacity: .28; }
+}
+
 /* Homepage: one complete, tactile playing card with a deliberate flip. */
 .landing-home .hero {
-  max-width: min(700px, 50vw);
-  margin-left: clamp(44px, 10vw, 184px);
-  padding: clamp(70px, 9vh, 104px) 0 132px;
+  max-width: min(720px, 48vw);
+  margin-left: clamp(36px, 8.8vw, 160px);
+  padding: clamp(62px, 8vh, 92px) 0 132px;
 }
 .hero h1 {
   width: max-content;
@@ -75,22 +133,28 @@
 }
 .landing-home .actions .primary { justify-content: space-between; }
 .landing-home .actions .secondary {
-  background: #0b0c0e99;
-  border-color: #62636a;
+  border-color: #ffffff42 !important;
+  background: linear-gradient(180deg, #ffffff0d, #ffffff05) !important;
+  box-shadow: inset 0 0 0 1px #e3232b14;
+  color: #f0eee8;
 }
 .landing-home .actions .secondary:hover,
-.landing-home .actions .secondary:focus-visible { border-color: #d3d0c7; background: #15171a; }
+.landing-home .actions .secondary:focus-visible {
+  border-color: #e441486b !important;
+  background: linear-gradient(180deg, #ffffff17, #e3232b0c) !important;
+  box-shadow: inset 0 0 0 1px #ffffff12, 0 0 24px #e3232b14;
+}
 .hero-table-card {
   position: absolute;
-  right: clamp(28px, 5.2vw, 88px);
-  top: calc(50% + 34px);
-  width: clamp(340px, 31vw, 440px);
+  right: clamp(20px, 4vw, 72px);
+  top: calc(50% - 10px);
+  width: clamp(410px, 35vw, 520px);
   aspect-ratio: 5 / 7;
   display: block;
   padding: 0;
   border: 0;
   background: transparent;
-  transform: translateY(-50%) rotate(-2.6deg) perspective(1100px) rotateY(5deg);
+  transform: translateY(-50%) rotate(2.1deg) perspective(1200px) rotateY(-4deg);
   overflow: visible;
   perspective: 1200px;
   cursor: pointer;
@@ -102,7 +166,7 @@
   display: block;
   transform-style: preserve-3d;
   transition: transform .76s cubic-bezier(.2,.74,.18,1);
-  filter: drop-shadow(22px 28px 0 #050506) drop-shadow(0 0 26px #e51b2330) drop-shadow(1px 1px 0 #6a1e24);
+  filter: drop-shadow(24px 30px 0 #050506) drop-shadow(-9px 3px 30px #e51b2338) drop-shadow(1px 1px 0 #6a1e24);
 }
 .hero-table-card.is-flipped .hero-card-inner { transform: rotateY(180deg); }
 .hero-card-face {
@@ -139,12 +203,61 @@
 .hero-card-face.back img { width: 31%; max-height: 42%; object-fit: contain; }
 .hero-card-face.back b { position: absolute; top: 22%; font: 800 34px var(--font-display); }
 .hero-card-face.back small { position: absolute; bottom: 22%; font-size: 9px; letter-spacing: .17em; color: #b7b4ab; }
-.hero-table-card:hover .hero-card-inner { filter: drop-shadow(22px 28px 0 #050506) drop-shadow(0 0 42px #e51b2348) drop-shadow(1px 1px 0 #6a1e24); }
+.hero-table-card:hover .hero-card-inner { filter: drop-shadow(24px 30px 0 #050506) drop-shadow(-10px 3px 48px #e51b2355) drop-shadow(1px 1px 0 #6a1e24); }
 .hero-table-card:focus-visible { outline: 2px solid var(--red); outline-offset: 12px; }
+
+/* Keep the court card and wordmark as two balanced halves on ordinary laptops. */
+@media (min-width: 921px) and (max-width: 1399px) {
+  .landing-home .hero {
+    max-width: 52vw;
+    margin-left: clamp(32px, 4.4vw, 66px);
+  }
+  .landing-home .hero h1 { font-size: clamp(58px, 6.25vw, 82px); }
+  .hero-table-card {
+    right: clamp(24px, 3vw, 44px);
+    width: clamp(360px, 34vw, 455px);
+  }
+}
+
+/* A narrow landscape/tablet view needs the same hierarchy without a squeezed card. */
+@media (min-width: 721px) and (max-width: 920px) {
+  .landing-home .hero {
+    max-width: 100%;
+    margin: 0 9vw;
+    padding-bottom: 36px;
+  }
+  .landing-home .hero h1 { font-size: clamp(58px, 10.5vw, 82px); }
+  .hero-table-card {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: min(62vw, 430px);
+    margin: 6px auto 92px;
+    transform: rotate(1.5deg) perspective(1000px) rotateY(-3deg);
+  }
+}
 .topbar .home-tabs {
   position: static;
   transform: none;
   margin-left: auto;
+  align-self: stretch;
+  align-items: stretch;
+}
+.topbar .home-tabs button {
+  position: relative;
+  border-bottom-color: transparent !important;
+  font-weight: 750;
+  letter-spacing: .12em;
+}
+.topbar .home-tabs button.active::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 -5px 16px #e3232b38;
 }
 .topbar::after { display: none !important; }
 .topbar-lore {
@@ -206,8 +319,11 @@
   right: clamp(28px, 5.2vw, 88px);
   bottom: 28px;
   display: block;
-  color: #76736d;
+  color: #aaa7a0;
 }
+.landing-home .home-footer a { color: #bdb9b0; }
+.landing-home .home-footer a:hover,
+.landing-home .home-footer a:focus-visible { color: #fff; }
 .landing-home .home-footer .public-legal-links {
   margin: 0;
   display: flex;
@@ -219,6 +335,7 @@
   flex-basis: auto;
   margin-left: auto;
   font-size: 9px;
+  color: #9e9b94;
 }
 .hero-note,
 .rule-strip p { font-size: 13px !important; }
@@ -365,6 +482,16 @@
   outline: none;
 }
 .result-ledger-shell .result-ledger { border: 0; }
+.result-ledger-shell .result-ledger[hidden] { display: none; }
+.choice-rail[data-count="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.choice-rail[data-count="5"] > div:nth-child(5) { border-right: 0; }
+.result-ledger[data-count="5"] > button:last-child {
+  grid-column: 1 / -1;
+  width: 50%;
+  justify-self: center;
+  border-left: 1px solid #292c30;
+  border-right: 1px solid #292c30;
+}
 .ledger-toggle {
   width: 100%;
   min-height: 46px;
@@ -406,6 +533,10 @@
 }
 
 @media (max-width: 1000px) {
+  .choice-rail[data-count="5"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .choice-rail[data-count="5"] > div { grid-column: span 2; }
+  .choice-rail[data-count="5"] > div:nth-child(4) { grid-column: 2 / span 2; }
+  .choice-rail[data-count="5"] > div:nth-child(5) { grid-column: 4 / span 2; }
   .arena {
     grid-template-columns: 180px minmax(0, 1fr);
     grid-template-rows: auto auto;
@@ -416,6 +547,23 @@
 }
 
 @media (max-width: 720px) {
+  .choice-rail[data-count="5"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choice-rail[data-count="5"] > div { grid-column: auto; }
+  .choice-rail[data-count="5"] > div:nth-child(4) { grid-column: auto; }
+  .choice-rail[data-count="5"] > div:nth-child(5),
+  .choice-rail > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-self: stretch;
+    border-left: 0;
+    border-right: 0;
+  }
+  .result-ledger[data-count="5"] > button:last-child {
+    grid-column: auto;
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+  }
   .shell::after,
   .game-shell::before {
     background-size: 30px 30px !important;
@@ -423,7 +571,29 @@
       repeating-linear-gradient(90deg, transparent 0 29px, #ffffff14 29px 30px),
       repeating-linear-gradient(0deg, transparent 0 29px, #ffffff10 29px 30px) !important;
   }
-  .landing-home .hero { max-width: 100%; margin-left: 0; padding: 48px 0 34px; }
+  .landing-home {
+    display: grid;
+    grid-template-rows: 72px minmax(0, 1fr) auto;
+    height: 100svh;
+    min-height: 100svh;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+  .landing-home .borderland-atmosphere {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 100svh;
+  }
+  .landing-home .hero {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    max-width: 100%;
+    min-height: 0;
+    margin-left: 0;
+    padding: clamp(34px, 6svh, 52px) 0 0;
+  }
   .landing-home .hero h1 {
     width:100%;
     max-width:none;
@@ -439,18 +609,19 @@
   .landing-home .hero h1 em { width:max-content; max-width:100%; white-space:nowrap; }
   .hero h1 .title-the { margin-left: 1px; font-size: .52em; }
   .landing-home .hero h1 em { font-size: .88em; letter-spacing: -.075em; }
-  .landing-home .lede { max-width:100%; margin:28px 0 32px; font-size:18px; line-height:1.5; }
-  .landing-home .actions { grid-template-columns: 1fr; width: 100%; }
-  .landing-home .actions button { height: 60px; font-size: 14px; }
-  .hero-table-card {
-    position: relative;
-    right: auto;
-    top: auto;
-    width: min(82vw, 330px);
-    margin: 28px auto 76px;
-    transform: rotate(-2.2deg) perspective(900px) rotateY(4deg);
+  .landing-home .lede {
+    max-width: 310px;
+    margin: 14px 0 16px;
+    color: #e0ddd5;
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.45;
   }
-  .hero-card-inner { filter: drop-shadow(14px 17px 0 #050506) drop-shadow(1px 1px 0 #4b171a); }
+  .landing-home .actions { grid-template-columns: 1fr; width: 100%; gap: 10px; }
+  .landing-home .actions button { height: 58px; font-size: 14px; }
+  .hero-table-card {
+    display: none !important;
+  }
   .entry-stage { min-height: calc(100vh - 72px); padding: 26px 12px 46px; }
   .entry-stage .entry-panel { padding: 34px 22px; box-shadow: 10px 12px 0 #050506 !important; }
   .topbar .home-tabs { gap: 2px; }
@@ -469,9 +640,10 @@
     left: auto;
     right: auto;
     bottom: auto;
-    margin: 0 0 6px;
-    padding: 24px 0 0;
+    margin: 0;
+    padding: 10px 0 0;
     border-top: 1px solid #2b2d31;
+    font-size: 9px;
   }
   .landing-home .home-footer .public-legal-links { justify-content: center; gap: 10px 18px; text-align: center; }
   .landing-home .home-footer .public-legal-links span { flex-basis: 100%; margin-left: 0; line-height: 1.5; }
@@ -486,6 +658,15 @@
   .arena .choice-zone { grid-column: 1; grid-row: 1; }
   .arena .timer { grid-column: 1; grid-row: 2; justify-self: center; }
   .arena .player-feed { grid-column: 1; grid-row: 3; }
+  .choice-zone h2 {
+    max-width: 100%;
+    margin-inline: auto;
+    font-size: clamp(40px, 12.5vw, 54px);
+    line-height: .86;
+    white-space: pre-line;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
   .lock-btn { width: min(100%, 390px); }
   .traditional-scale { height: 205px; }
   .scale-beam { left: 15%; right: 15%; top: 42px; }
@@ -541,4 +722,375 @@
 @media (max-width: 720px) {
   .roster-row { grid-template-columns: 24px 34px minmax(0, 1fr) auto 50px; gap: 8px; }
   .kick-player-btn { min-width: 48px; }
+}
+
+/* --------------------------------------------------------------------------
+   Landing and rules — final responsive composition
+
+   These rules intentionally live last. Earlier visual experiments used
+   conflicting flex/grid and locked-viewport declarations; one final layer
+   keeps the poster composition predictable at every viewport.
+   -------------------------------------------------------------------------- */
+
+.landing-home {
+  min-height: 100svh;
+  height: auto;
+  overflow-x: clip;
+  overflow-y: auto;
+  padding-bottom: 0;
+}
+
+.landing-home .hero {
+  width: min(50vw, 680px);
+  max-width: 680px;
+  margin-left: clamp(28px, 6.5vw, 112px);
+  padding: clamp(48px, 7vh, 76px) 0 138px;
+}
+
+.landing-home .hero h1 {
+  width: min-content;
+  max-width: 100%;
+  margin-top: clamp(8px, 2vh, 24px);
+  font-size: clamp(60px, 6.35vw, 94px);
+  line-height: .83;
+  letter-spacing: -.05em;
+}
+
+.landing-home .hero h1 .title-the {
+  font-size: .5em;
+  line-height: .88;
+  letter-spacing: -.015em;
+}
+
+.landing-home .hero h1 .title-beauty { letter-spacing: -.052em; }
+.landing-home .hero h1 em {
+  font-size: .89em;
+  letter-spacing: -.068em;
+}
+
+.landing-home .lede {
+  max-width: 570px;
+  margin: 27px 0 31px;
+  color: #c9c6be;
+  font-size: clamp(17px, 1.18vw, 20px);
+  font-weight: 520;
+  line-height: 1.5;
+}
+
+.landing-home .actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: min(100%, 560px);
+  gap: 12px !important;
+  margin-top: 0 !important;
+}
+
+.landing-home .actions button {
+  min-height: 62px;
+  font-size: clamp(13px, .85vw, 15px);
+}
+
+.landing-home .hero-table-card {
+  right: clamp(30px, 5vw, 92px);
+  top: calc(50% + 2px);
+  width: clamp(350px, 31vw, 470px);
+  max-height: calc(100svh - 190px);
+  transform: translateY(-50%) rotate(1.6deg) perspective(1200px) rotateY(-5deg);
+}
+
+.landing-home .home-footer {
+  left: clamp(28px, 5vw, 76px);
+  right: clamp(28px, 5vw, 76px);
+  bottom: 22px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.landing-home .home-footer .public-legal-links { gap: 16px 24px; }
+.landing-home .home-footer .public-legal-links span { font-size: 10px; }
+
+.topbar .home-tabs button:focus-visible {
+  outline: 1px solid var(--red);
+  outline-offset: -4px;
+}
+
+/* Short laptops need a compact poster, not overlapping scaled-down parts. */
+@media (min-width: 921px) and (max-height: 760px) {
+  .landing-home .hero {
+    margin-left: clamp(28px, 5vw, 74px);
+    padding-top: 32px;
+    padding-bottom: 92px;
+  }
+  .landing-home .hero h1 {
+    margin-top: 0;
+    font-size: clamp(52px, 5.8vw, 74px);
+  }
+  .landing-home .lede { margin: 20px 0 24px; font-size: 16px; }
+  .landing-home .actions button { min-height: 56px; }
+  .landing-home .hero-table-card {
+    top: calc(50% + 12px);
+    width: clamp(300px, 28vw, 380px);
+    max-height: calc(100svh - 164px);
+  }
+  .landing-home .home-footer { bottom: 13px; }
+}
+
+/* Tablet: use a stacked poster. A reduced desktop composition puts the card
+   over the actions at 768–900px, so the artwork returns to document flow. */
+@media (min-width: 721px) and (max-width: 920px) {
+  .landing-home .hero {
+    width: min(calc(100% - 48px), 640px);
+    max-width: 640px;
+    margin-left: 24px;
+    padding: 70px 0 0;
+  }
+  .landing-home .hero h1 { font-size: clamp(54px, 8vw, 72px); }
+  .landing-home .lede { max-width: 520px; font-size: 17px; }
+  .landing-home .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(100%, 520px);
+  }
+  .landing-home .hero-table-card {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: clamp(300px, 43vw, 360px);
+    max-height: none;
+    margin: 42px auto 76px;
+    transform: rotate(-1.3deg) perspective(1100px) rotateY(4deg);
+  }
+  .landing-home .home-footer {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    padding: 18px 0 0;
+    border-top: 1px solid #303238;
+  }
+}
+
+/* Phone: the content is a deliberate vertical poster. Nothing is cropped to
+   force a fake one-screen layout, and the King remains part of the scene. */
+@media (max-width: 720px) {
+  .landing-home {
+    display: block;
+    min-height: 100svh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .landing-home .borderland-atmosphere {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    min-height: 100svh;
+  }
+  .landing-home .hero {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: clamp(38px, 7svh, 58px) 0 0;
+  }
+  .landing-home .hero h1 {
+    width: min-content;
+    max-width: 100%;
+    margin: 0;
+    font-size: clamp(45px, 13.6vw, 58px);
+    line-height: .84;
+    letter-spacing: -.045em;
+  }
+  .landing-home .hero h1 .title-the {
+    margin-left: 1px;
+    font-size: .49em;
+  }
+  .landing-home .hero h1 .title-beauty { letter-spacing: -.052em; }
+  .landing-home .hero h1 em {
+    font-size: .84em;
+    letter-spacing: -.055em;
+  }
+  .landing-home .lede {
+    max-width: 330px;
+    margin: 20px 0 24px;
+    color: #d2cfc7;
+    font-size: clamp(16px, 4.3vw, 18px);
+    line-height: 1.5;
+  }
+  .landing-home .actions {
+    grid-template-columns: 1fr !important;
+    width: 100%;
+    gap: 10px !important;
+  }
+  .landing-home .actions button {
+    min-height: 58px;
+    font-size: 13px;
+  }
+  .landing-home .hero-table-card {
+    position: relative;
+    display: block !important;
+    right: auto;
+    top: auto;
+    width: min(70vw, 285px);
+    max-height: none;
+    margin: 38px auto 58px;
+    transform: rotate(-1.4deg) perspective(1000px) rotateY(4deg);
+  }
+  .landing-home .home-footer {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    padding: 18px 0 0;
+    border-top: 1px solid #303238;
+    font-size: 11px;
+  }
+  .landing-home .home-footer .public-legal-links {
+    justify-content: center;
+    gap: 10px 20px;
+    text-align: center;
+  }
+  .landing-home .home-footer .public-legal-links span {
+    flex-basis: 100%;
+    margin-left: 0;
+    font-size: 9px;
+    line-height: 1.55;
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar .brand { gap: 8px; font-size: 15px; }
+  .topbar .home-tabs button { min-width: 58px; padding-inline: 7px; font-size: 10px; }
+  .landing-home .hero h1 { font-size: clamp(42px, 13.2vw, 50px); }
+  .landing-home .hero-table-card { width: min(76vw, 270px); }
+}
+
+/* Rules: a physical deck, not a grid of interchangeable product cards. */
+.landing-rules {
+  min-height: 100svh;
+  height: auto;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.landing-rules .rules-page { min-height: calc(100svh - 92px); }
+.classic-rules .rules-intro h2 { text-wrap: balance; }
+.classic-rules .rules-intro p { color: #d0cdc5; }
+.classic-rule-copy p { font-size: 14.5px; }
+
+@media (max-width: 1050px) {
+  .landing-rules .rules-page { padding-top: 48px; }
+  .classic-rules .rules-intro h2 { font-size: clamp(50px, 8vw, 76px); }
+  .classic-rules .rules-intro p {
+    max-width: 650px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 600px) {
+  .landing-rules {
+    display: block;
+    min-height: 100svh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  .landing-rules .rules-page {
+    display: block;
+    min-height: 0;
+    padding: 36px 0 58px;
+    overflow: visible;
+  }
+  .classic-rules { padding-bottom: 0; }
+  .classic-rules .rules-intro { margin-bottom: 26px; }
+  .classic-rules .rules-intro .section-index { margin-bottom: 12px; font-size: 10px; }
+  .classic-rules .rules-intro h2 {
+    max-width: 320px;
+    font-size: clamp(42px, 12vw, 54px);
+    line-height: .86;
+    white-space: normal;
+  }
+  .classic-rules .rules-intro p {
+    max-width: 340px;
+    margin-top: 18px;
+    padding-left: 14px;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .classic-rules-deck {
+    display: flex;
+    align-items: stretch;
+    min-height: 0;
+    margin: 0 -24px;
+    padding: 8px 24px 22px;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 24px;
+  }
+  .classic-rule-card {
+    flex: 0 0 min(82vw, 320px);
+    width: min(82vw, 320px);
+    height: auto;
+    min-height: 430px;
+    aspect-ratio: 5 / 7;
+    padding: 56px 24px 112px;
+    scroll-snap-align: start;
+  }
+  .rule-diagram { height: 190px; min-height: 190px; }
+  .classic-rule-copy { left: 24px; right: 24px; bottom: 42px; }
+  .classic-rule-copy h3 { font-size: 27px; }
+  .classic-rule-copy p { font-size: 14px; line-height: 1.45; }
+  .rules-play {
+    width: 100%;
+    height: 58px;
+    margin-top: 18px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .classic-rule-card {
+    flex-basis: calc(100vw - 58px);
+    width: calc(100vw - 58px);
+    min-height: 405px;
+    padding-inline: 21px;
+  }
+  .classic-rule-copy { left: 21px; right: 21px; }
+}
+
+/* Keyboard and touch affordances stay visible without changing the table's
+   editorial geometry. */
+:where(button, a, input, [role="button"]):focus-visible {
+  outline: 2px solid #ff4b51;
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .topbar .brand,
+  .topbar .home-tabs button,
+  .actions button,
+  .entry-panel .back,
+  .entry-panel .avatar-picker button,
+  .entry-panel .timer-pick button,
+  .entry-panel .enter-btn,
+  .entry-panel .spectator-enter,
+  .lock-btn,
+  .start-btn,
+  .next-btn,
+  .rules-play,
+  .ledger-toggle {
+    min-height: 44px;
+  }
+
+  .feed-row strong { font-size: 14px; }
+  .feed-row strong small { font-size: 8px; }
+  .feed-row > i { font-size: 10px; }
+  .entry-panel .entry-legal,
+  .landing-home .home-footer .public-legal-links span { font-size: 10px; }
 }

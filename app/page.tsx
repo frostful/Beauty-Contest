@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { RULE_AMENDMENTS, type RuleAmendmentId } from "../lib/rule-amendments";
 
 type Player = { id:string; name:string; avatar:string; isHost:boolean; isBot:boolean; score:number; alive:boolean; submitted:boolean; pick:number|null; invalid:boolean; roundDelta:number; online:boolean };
 type Spectator = { id:string; name:string; avatar:string; online:boolean };
-type RuleAmendmentId = "tie_seal" | "consecutive_tie" | "duplicates_void" | "exact_double" | "hundred_zero";
 type GameState = {
   room:{ code:string; status:"lobby"|"briefing"|"playing"|"results"|"finished"; round:number; roundSeconds:number; deadline:number|null; resultStartedAt:number|null; autoFinishAt:number|null; average:number|null; target:number|null; winnerId:string|null; winnerName:string|null; exactHit:boolean; message:string|null; initialPlayers:number; bannedNumbers:number[]; amendmentIds:RuleAmendmentId[]; briefingStartedAt:number|null; briefingEndsAt:number|null };
   me:{ id:string; name:string; avatar:string; isHost:boolean; isSpectator:boolean; alive:boolean; submitted:boolean; pick:number|null; score:number };
@@ -17,13 +18,6 @@ const SESSION_KEY = "median-game-session";
 const SOUND_KEY = "median-game-sound";
 const DEFAULT_ROOM_SIZE = 5;
 const AVATAR_OPTIONS=[{id:"diamond",symbol:"◆",label:"Diamond"},{id:"crown",symbol:"♛",label:"King"},{id:"laser",symbol:"ϟ",label:"Pulse"},{id:"visa",symbol:"◉",label:"Vision"},{id:"rabbit",symbol:"兔",label:"Rabbit"},{id:"spade",symbol:"♠",label:"Spade"},{id:"heart",symbol:"♥",label:"Heart"},{id:"club",symbol:"♣",label:"Club"}];
-const RULE_AMENDMENTS:Record<RuleAmendmentId,{number:string;title:string;short:string;narration:string;audioSrc:string;duration:number}>={
-  tie_seal:{number:"01",title:"NUMBER SEALED",short:"The tied number is forbidden for one round.",narration:"The number shared by the closest players is now sealed. It cannot be selected in the next round.",audioSrc:"/audio/01-tie-number-sealed.mp3",duration:9000},
-  consecutive_tie:{number:"02",title:"DEADLOCK PENALTY",short:"Every tied player loses one point.",narration:"A consecutive tie has been recorded. Every tied player loses one point.",audioSrc:"/audio/02-consecutive-tie-penalty.mp3",duration:10300},
-  duplicates_void:{number:"03",title:"DUPLICATES VOID",short:"Matching choices leave the calculation.",narration:"Duplicate choices are now void. Identical selections will be removed from the calculation.",audioSrc:"/audio/03-duplicate-choices-void.mp3",duration:9500},
-  exact_double:{number:"04",title:"EXACT MATCH · DOUBLE LOSS",short:"An exact target doubles every losing penalty.",narration:"An exact match now activates double loss. Every losing player will lose two points.",audioSrc:"/audio/04-exact-match-double-loss.mp3",duration:10500},
-  hundred_zero:{number:"05",title:"100 DEFEATS 0",short:"When the extremes meet, one hundred survives.",narration:"If zero and one hundred are selected, one hundred defeats zero.",audioSrc:"/audio/05-one-hundred-defeats-zero.mp3",duration:9300},
-};
 type SoundKind = "lock"|"reveal"|"transfer"|"divide"|"average"|"multiply"|"target"|"resolve"|"eliminate"|"victory"|"select"|"tick"|"round"|"flip"|"amendment";
 let sharedAudioContext:AudioContext|null=null;
 let sharedAudioMaster:AudioNode|null=null;
@@ -96,6 +90,8 @@ export default function Home() {
   const serverClock=useRef({server:Date.now(),client:Date.now()});
   const requestVersion=useRef(0);
   const mutationInFlight=useRef(false);
+  const refreshAbort=useRef<AbortController|null>(null);
+  const briefingAudioKey=state?.room.status==="briefing"?state.room.amendmentIds.join(","):"";
 
   const receiveState=useCallback((next:GameState)=>{
     serverClock.current={server:next.serverNow,client:Date.now()};
@@ -103,6 +99,8 @@ export default function Home() {
   },[]);
 
   const saveSession = useCallback((next:Session|null) => {
+    refreshAbort.current?.abort();
+    refreshAbort.current=null;
     requestVersion.current+=1;
     setSession(next); setState(null);
     if (next) localStorage.setItem(SESSION_KEY, JSON.stringify(next)); else localStorage.removeItem(SESSION_KEY);
@@ -118,9 +116,12 @@ export default function Home() {
 
   const refresh = useCallback(async (quiet=true) => {
     if (!session||mutationInFlight.current) return;
+    refreshAbort.current?.abort();
+    const controller=new AbortController();
+    refreshAbort.current=controller;
     const requestId=++requestVersion.current;
     try {
-      const response = await fetch(`/api/game?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`, {cache:"no-store"});
+      const response = await fetch(`/api/game?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`, {cache:"no-store",signal:controller.signal});
       const data = await response.json() as GameState & {error?:string};
       if(requestId!==requestVersion.current)return;
       if (!response.ok) {
@@ -132,7 +133,12 @@ export default function Home() {
       receiveState(data); setError("");setConnectionLost(false);
       if (previousStatus.current === "playing" && data.room.status !== "playing") tone("reveal");
       previousStatus.current = data.room.status;
-    } catch (e) { if(requestId===requestVersion.current){setConnectionLost(true);if (!quiet) setError(e instanceof Error ? e.message : "Connection lost.");} }
+    } catch (e) {
+      if(e instanceof DOMException&&e.name==="AbortError")return;
+      if(requestId===requestVersion.current){setConnectionLost(true);if (!quiet) setError(e instanceof Error ? e.message : "Connection lost.");}
+    } finally {
+      if(refreshAbort.current===controller)refreshAbort.current=null;
+    }
   }, [session,tone,saveSession,receiveState]);
 
   useEffect(() => {
@@ -176,7 +182,21 @@ export default function Home() {
     };
   },[session,refresh]);
   useEffect(()=>{if(!session)return;const reconnect=()=>refresh(false);const visible=()=>{if(document.visibilityState==="visible")refresh(true);};window.addEventListener("online",reconnect);document.addEventListener("visibilitychange",visible);return()=>{window.removeEventListener("online",reconnect);document.removeEventListener("visibilitychange",visible);};},[session,refresh]);
-  useEffect(() => { const id=setInterval(()=>setNow(Date.now()),250); return()=>clearInterval(id); },[]);
+  // The shared clock only drives second-level interface copy. Animation scenes
+  // keep their own local frame clock so the entire game shell is not repainted
+  // four times a second.
+  useEffect(() => {
+    if(!session&&!announcementLab)return;
+    const id=setInterval(()=>setNow(Date.now()),1000);
+    return()=>clearInterval(id);
+  },[session,announcementLab]);
+  useEffect(()=>{
+    if(!briefingAudioKey)return;
+    for(const id of briefingAudioKey.split(",") as RuleAmendmentId[]){
+      const amendment=RULE_AMENDMENTS[id];
+      if(amendment)void fetch(amendment.audioSrc,{cache:"force-cache"}).catch(()=>undefined);
+    }
+  },[briefingAudioKey]);
 
   useEffect(()=>{
     if(!state)return;
@@ -273,7 +293,7 @@ export default function Home() {
   );
 }
 
-function BorderlandAtmosphere(){return <div className="borderland-atmosphere" aria-hidden="true"><img className="balance-scale-bg" src="/balance-scale.svg" alt=""/><img className="borderland-crossing" src="/borderland-crossing.svg" alt=""/><img className="borderland-gate" src="/borderland-gate.svg" alt=""/><img className="borderland-visa" src="/borderland-visa.svg" alt=""/></div>}
+function BorderlandAtmosphere(){return <div className="borderland-atmosphere" aria-hidden="true"><img className="balance-scale-bg" src="/balance-scale.svg" alt=""/><img className="lady-justice-blueprint-bg" src="/median-lady-justice-blueprint.svg" alt=""/><img className="borderland-crossing" src="/borderland-crossing.svg" alt=""/><img className="borderland-gate" src="/borderland-gate.svg" alt=""/><img className="borderland-visa" src="/borderland-visa.svg" alt=""/></div>}
 
 function AnnouncementRehearsal({now,soundOn,toggleSound,tone}:{now:number;soundOn:boolean;toggleSound:()=>void;tone:(kind:SoundKind)=>void}){
   const [preview,setPreview]=useState<AmendmentPreview|null>(null);
@@ -286,7 +306,7 @@ function AnnouncementRehearsal({now,soundOn,toggleSound,tone}:{now:number;soundO
   },[loop,preview]);
   return <main className="game-shell announcement-lab">
     <div className="grain" aria-hidden="true"/><div className="suit-field" aria-hidden="true"/><BorderlandAtmosphere/>
-    <header className="announcement-lab-head"><div><img src="/king-diamond.svg" alt=""/><span><small>INTERNAL TEST CHANNEL</small><strong>ANNOUNCEMENT REHEARSAL</strong></span></div><a href="/">RETURN TO SITE →</a></header>
+    <header className="announcement-lab-head"><div><img src="/king-diamond.svg" alt=""/><span><small>INTERNAL TEST CHANNEL</small><strong>ANNOUNCEMENT REHEARSAL</strong></span></div><Link href="/">RETURN TO SITE →</Link></header>
     <nav className="announcement-lab-console" aria-label="Choose an announcement to rehearse">
       <div className="lab-announcement-list">{(Object.keys(RULE_AMENDMENTS) as RuleAmendmentId[]).map(id=><button className={preview?.id===id?"active":""} onClick={()=>launch(id)} key={id}><b>{RULE_AMENDMENTS[id].number}</b><span>{RULE_AMENDMENTS[id].title}</span></button>)}</div>
       <div className="lab-playback"><button onClick={toggleSound}>{soundOn?"SOUND ON":"ENABLE SOUND"}</button><button className={loop?"active":""} aria-pressed={loop} onClick={()=>setLoop(value=>!value)}>LOOP {loop?"ON":"OFF"}</button>{preview&&<button onClick={()=>launch(preview.id)}>REPLAY ↻</button>}</div>
@@ -305,7 +325,7 @@ const AMENDMENT_CUES:Record<RuleAmendmentId,[number,number,number]>={
 
 function AmendmentVisual({id,step,mentionZero=false,mentionHundred=false}:{id:RuleAmendmentId;step:number;mentionZero?:boolean;mentionHundred?:boolean}){
   const amendment=RULE_AMENDMENTS[id];
-  const intro=id==="hundred_zero"?"FINAL RULE AMENDMENT":id==="consecutive_tie"?"DEADLOCK PROTOCOL":`RULE AMENDMENT ${amendment.number} / 05`;
+  const intro=id==="hundred_zero"?<>FINAL RULE <br className="story-title-break"/>AMENDMENT</>:id==="consecutive_tie"?"DEADLOCK PROTOCOL":<>RULE <br className="story-title-break"/>AMENDMENT <br className="story-title-break"/>{amendment.number} / 05</>;
   return <div className={`amendment-story story-${id} story-step-${step} ${mentionZero?"mention-zero":""} ${mentionHundred?"mention-hundred":""}`}>
     <div className="story-title"><small>K♦ / TABLE AUTHORITY</small><h2>{intro}</h2><span>{amendment.title}</span></div>
     <div className="story-example" aria-hidden="true">
@@ -345,9 +365,32 @@ function AmendmentVisual({id,step,mentionZero=false,mentionHundred=false}:{id:Ru
 }
 
 function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameState;preview?:AmendmentPreview;now:number;soundOn:boolean;tone:(kind:SoundKind)=>void}) {
+  const clockAnchor=useRef({server:now,client:0});
+  const [renderNow,setRenderNow]=useState(now);
+  useEffect(()=>{
+    let frame=0;
+    let lastPaint=0;
+    const tick=(timestamp:number)=>{
+      if(clockAnchor.current.client===0)clockAnchor.current.client=performance.now();
+      if(timestamp-lastPaint>=50){
+        lastPaint=timestamp;
+        const anchor=clockAnchor.current;
+        setRenderNow(anchor.server+(performance.now()-anchor.client));
+      }
+      frame=requestAnimationFrame(tick);
+    };
+    frame=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(frame);
+  },[]);
+  useEffect(()=>{
+    const anchor=clockAnchor.current;
+    const estimated=anchor.server+(performance.now()-anchor.client);
+    if(Math.abs(now-estimated)>1200)clockAnchor.current={server:now,client:performance.now()};
+  },[now]);
+  const currentNow=renderNow;
   const ids=preview?[preview.id]:state?.room.amendmentIds.length?state.room.amendmentIds:["duplicates_void" as RuleAmendmentId];
-  const startedAt=preview?.startedAt??state?.room.briefingStartedAt??now;
-  const elapsed=Math.max(0,now-startedAt);
+  const startedAt=preview?.startedAt??state?.room.briefingStartedAt??currentNow;
+  const elapsed=Math.max(0,currentNow-startedAt);
   let elapsedBeforeActive=0;
   let activeIndex=ids.length-1;
   let cursor=0;
@@ -361,24 +404,32 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
   const itemElapsed=Math.max(0,elapsed-elapsedBeforeActive);
   const serverProgress=Math.max(0,Math.min(1,itemElapsed/amendment.duration));
   const itemStartsAt=startedAt+elapsedBeforeActive;
-  const endsAt=preview?preview.startedAt+amendment.duration:state?.room.briefingEndsAt??now;
-  const seconds=Math.max(0,Math.ceil((endsAt-now)/1000));
+  const endsAt=preview?preview.startedAt+amendment.duration:state?.room.briefingEndsAt??currentNow;
+  const seconds=Math.max(0,Math.ceil((endsAt-currentNow)/1000));
   const [voiceClock,setVoiceClock]=useState<{id:RuleAmendmentId|"";current:number;duration:number;playing:boolean;mode:"idle"|"loading"|"voice"|"fallback";fallbackStartedAt:number}>({id:"",current:0,duration:0,playing:false,mode:"idle",fallbackStartedAt:0});
 
   useEffect(()=>{
-    if(!soundOn){setVoiceClock({id:activeId,current:0,duration:0,playing:false,mode:"idle",fallbackStartedAt:0});return;}
+    if(!soundOn)return;
     const audio=new Audio(amendment.audioSrc);
     audio.preload="auto";
     let cancelled=false;
     let started=false;
     let mediaReady=false;
+    let syncFrame=0;
+    let lastSync=0;
     const timers:number[]=[];
     // Anchor the server-authored start time to this browser once. Clock skew
     // and later polling updates cannot make the local presentation jump.
-    const clientStartAt=Date.now()+Math.max(0,itemStartsAt-now);
+    const clientStartAt=Date.now()+Math.max(0,itemStartsAt-currentNow);
     const estimatedServerNow=()=>itemStartsAt+Math.max(0,Date.now()-clientStartAt);
     const later=(callback:()=>void,delay:number)=>{timers.push(window.setTimeout(callback,Math.max(0,delay)));};
     const sync=()=>setVoiceClock({id:activeId,current:audio.currentTime,duration:Number.isFinite(audio.duration)?audio.duration:amendment.duration/1000,playing:!audio.paused,mode:"voice",fallbackStartedAt:0});
+    const syncLoop=(timestamp:number)=>{
+      if(cancelled)return;
+      if(timestamp-lastSync>=50){lastSync=timestamp;sync();}
+      syncFrame=window.requestAnimationFrame(syncLoop);
+    };
+    const startSync=()=>{if(!syncFrame)syncFrame=window.requestAnimationFrame(syncLoop);};
     const beginFallback=()=>{
       if(cancelled||started)return;
       if(Date.now()<clientStartAt){later(beginFallback,clientStartAt-Date.now());return;}
@@ -391,7 +442,7 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
       if(Date.now()<clientStartAt){later(beginVoice,clientStartAt-Date.now());return;}
       started=true;
       audio.currentTime=0;
-      audio.play().then(sync).catch(()=>{started=false;beginFallback();});
+      audio.play().then(()=>{startSync();sync();}).catch(()=>{started=false;beginFallback();});
     };
     const ready=()=>{mediaReady=true;beginVoice();};
     setVoiceClock({id:activeId,current:0,duration:0,playing:false,mode:"loading",fallbackStartedAt:0});
@@ -407,13 +458,13 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
     // If decoding or autoplay stalls, start the visual fallback shortly after
     // the scheduled beat instead of leaving the player on a frozen frame.
     later(beginFallback,clientStartAt-Date.now()+1500);
-    return()=>{cancelled=true;timers.forEach(timer=>window.clearTimeout(timer));audio.removeEventListener("canplay",ready);audio.removeEventListener("canplaythrough",ready);audio.removeEventListener("timeupdate",sync);audio.removeEventListener("play",sync);audio.removeEventListener("pause",sync);audio.removeEventListener("ended",sync);audio.removeEventListener("error",beginFallback);audio.pause();};
+    return()=>{cancelled=true;timers.forEach(timer=>window.clearTimeout(timer));if(syncFrame)window.cancelAnimationFrame(syncFrame);audio.removeEventListener("canplay",ready);audio.removeEventListener("canplaythrough",ready);audio.removeEventListener("timeupdate",sync);audio.removeEventListener("play",sync);audio.removeEventListener("pause",sync);audio.removeEventListener("ended",sync);audio.removeEventListener("error",beginFallback);audio.pause();};
   // Each amendment receives one locally anchored narration attempt.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[activeId,itemStartsAt,soundOn,tone]);
 
   const voiceProgress=voiceClock.id===activeId&&voiceClock.duration>0?voiceClock.current/voiceClock.duration:0;
-  const fallbackProgress=voiceClock.id===activeId&&voiceClock.mode==="fallback"?Math.max(0,(now-voiceClock.fallbackStartedAt)/amendment.duration):0;
+  const fallbackProgress=voiceClock.id===activeId&&voiceClock.mode==="fallback"?Math.max(0,(currentNow-voiceClock.fallbackStartedAt)/amendment.duration):0;
   // With narration enabled, visuals stay at frame zero until media is ready
   // and the scheduled start arrives. They never reveal elapsed beats first.
   const progress=soundOn
@@ -424,7 +475,7 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
   const mentionZero=activeId==="hundred_zero"&&((progress>=.14&&progress<.29)||progress>=.83);
   const mentionHundred=activeId==="hundred_zero"&&((progress>=.29&&progress<.53)||(progress>=.60&&progress<.83));
 
-  return <section className={`rule-amendment-stage kinetic-amendment amendment-${activeId} beat-${beat} ${voiceClock.playing?"voice-playing":""} ${now<itemStartsAt||voiceClock.mode==="loading"?"announcement-preparing":""}`} style={{"--voice-progress":progress} as React.CSSProperties} aria-live="assertive" aria-label={`Rule amendment: ${amendment.title}`}>
+  return <section className={`rule-amendment-stage kinetic-amendment amendment-${activeId} beat-${beat} ${soundOn&&voiceClock.playing?"voice-playing":""} ${currentNow<itemStartsAt||voiceClock.mode==="loading"?"announcement-preparing":""}`} style={{"--voice-progress":progress} as React.CSSProperties} aria-live="assertive" aria-label={`Rule amendment: ${amendment.title}`}>
     <div className="amendment-scan" aria-hidden="true"/>
     <header className="amendment-head"><span>{preview?"REHEARSAL":`ROUND ${String(state?.room.round??0).padStart(2,"0")}`}</span><b>TABLE AMENDMENT</b><small>{preview?`TRANSMISSION · ${seconds}s`:`SELECTION OPENS IN ${seconds}s`}</small></header>
     <AmendmentVisual id={activeId} step={beat} mentionZero={mentionZero} mentionHundred={mentionHundred}/>
@@ -437,7 +488,7 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
 
 function CreepingJoker(){
   const [appearance,setAppearance]=useState({visible:false,x:50,tilt:0,gazeX:0,gazeY:5});
-  useEffect(()=>{let arrival=0,departure=0,cooldown=0,cancelled=false;const schedule=()=>{const delay=[5000,8000,12000][Math.floor(Math.random()*3)];arrival=window.setTimeout(()=>{if(cancelled)return;const mobile=window.innerWidth<600;setAppearance(value=>({...value,visible:true,x:(mobile?34:14)+Math.random()*(mobile?32:72),tilt:-3+Math.random()*6,gazeX:0,gazeY:5}));departure=window.setTimeout(()=>{setAppearance(value=>({...value,visible:false}));cooldown=window.setTimeout(schedule,2200);},14000);},delay);};schedule();return()=>{cancelled=true;clearTimeout(arrival);clearTimeout(departure);clearTimeout(cooldown);};},[]);
+  useEffect(()=>{let arrival=0,departure=0,cooldown=0,cancelled=false;const schedule=()=>{const delay=[7000,11000,16000][Math.floor(Math.random()*3)];arrival=window.setTimeout(()=>{if(cancelled)return;const mobile=window.innerWidth<600;const left=Math.random()<.5;const x=mobile?(left?8:92):50;setAppearance(value=>({...value,visible:true,x,tilt:-3+Math.random()*6,gazeX:0,gazeY:5}));departure=window.setTimeout(()=>{setAppearance(value=>({...value,visible:false}));cooldown=window.setTimeout(schedule,6000+Math.random()*6000);},14000);},delay);};schedule();return()=>{cancelled=true;clearTimeout(arrival);clearTimeout(departure);clearTimeout(cooldown);};},[]);
   useEffect(()=>{const follow=(event:PointerEvent)=>setAppearance(value=>value.visible?{...value,gazeX:(event.clientX/window.innerWidth-.5)*12,gazeY:Math.max(2,Math.min(8,event.clientY/window.innerHeight*9))}:value);const roam=window.setInterval(()=>setAppearance(value=>value.visible?{...value,gazeX:-5+Math.random()*10,gazeY:3+Math.random()*5}:value),720);window.addEventListener("pointermove",follow,{passive:true});return()=>{clearInterval(roam);window.removeEventListener("pointermove",follow);};},[]);
   const fingers=()=>Array.from({length:4}).map((_,index)=><i key={index}/>);
   return <div className={`creeping-joker ${appearance.visible?"is-visible":""}`} style={{"--joker-x":`${appearance.x}%`,"--joker-tilt":`${appearance.tilt}deg`,"--look-x":`${appearance.gazeX}px`,"--look-y":`${appearance.gazeY}px`} as React.CSSProperties} aria-hidden="true"><div className="joker-grip"/><div className="joker-hand left">{fingers()}<b/></div><div className="joker-hand right">{fingers()}<b/></div><div className="joker-head"><div className="joker-hat"><i/><b>♦</b><i/></div><div className="joker-face"><span className="joker-brow left"/><span className="joker-brow right"/><span className="joker-eye left"><i/></span><span className="joker-eye right"><i/></span><span className="joker-nose">♦</span><span className="joker-smile"/></div><small>YOU SHOULD HAVE CHOSEN LOWER</small></div></div>;
@@ -449,23 +500,23 @@ function Landing(p:{screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"r
   return <main className={`shell landing-${p.screen}`}><Frame screen={p.screen} setScreen={p.setScreen}>
     {p.screen==="rules"?<RulesDeck play={()=>p.setScreen("create")}/>:p.screen==="home"?<><section className="hero"><h1><span className="title-the">THE</span><span className="title-beauty">BEAUTY</span><em>CONTEST</em></h1><p className="lede">Choose a number. Read the room. Survive the average.</p>
       <div className="actions"><button className="primary" onClick={()=>p.setScreen("create")}><span>CREATE ROOM</span><b>↗</b></button><button className="secondary" onClick={()=>p.setScreen("join")}>JOIN WITH CODE</button></div>
-    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Classic King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>Unofficial fan-made game · Not affiliated with Netflix</span></nav></footer></>:
+    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Mirrored King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><span>Unofficial fan-made game · Not affiliated with Netflix</span></nav></footer></>:
       <section className="entry-stage"><form className="entry-panel" onSubmit={p.enter}><button type="button" className="back" onClick={()=>p.setScreen("home")}>←</button><span className="form-kicker">{p.screen==="create"?"NEW FIVE-SEAT MATCH":"ENTER PROTOCOL"}</span>
-        {p.screen==="join"&&<label>ROOM CODE<input value={p.code} onChange={e=>p.setCode(e.target.value.replace(/[^a-z]/gi,"").toUpperCase())} required minLength={4} maxLength={4} pattern="[A-Za-z]{4}" placeholder="KJRM" autoFocus/></label>}
-        <label>PLAYER NAME<input value={p.name} onChange={e=>p.setName(e.target.value)} required maxLength={18} placeholder="YOUR ALIAS" autoFocus={p.screen==="create"}/></label>
+        {p.screen==="join"&&<label>ROOM CODE<input value={p.code} onChange={e=>p.setCode(e.target.value.replace(/[^a-z]/gi,"").toUpperCase())} required minLength={4} maxLength={4} pattern="[A-Za-z]{4}" placeholder="KJRM"/></label>}
+        <label>PLAYER NAME<input value={p.name} onChange={e=>p.setName(e.target.value)} required maxLength={18} placeholder="YOUR ALIAS"/></label>
         <div className="avatar-picker"><span>CHOOSE PROFILE</span><div>{AVATAR_OPTIONS.map(option=><button type="button" aria-label={`Choose ${option.label} profile`} aria-pressed={p.avatar===option.id} className={p.avatar===option.id?"selected":""} onClick={()=>p.setAvatar(option.id)} key={option.id}><AvatarBadge avatar={option.id}/><small>{option.label}</small></button>)}</div></div>
         {p.screen==="create"&&<div className="timer-pick"><span>ROUND TIMER</span><div>{[[30,"30 SEC"],[60,"1 MIN"],[180,"3 MIN · SERIES"]].map(([v,l])=><button type="button" className={p.seconds===v?"active":""} key={v} onClick={()=>p.setSeconds(Number(v))}>{l}</button>)}</div></div>}
-        {p.error&&<p className="form-error">{p.error}</p>}{p.screen==="create"?<button className="enter-btn" disabled={p.busy}>{p.busy?"CONNECTING…":"CREATE ROOM  →"}</button>:<div className="join-actions"><button className="enter-btn" value="join" disabled={p.busy}>{p.busy?"CONNECTING…":"JOIN TO PLAY  →"}</button><button className="spectator-enter" value="spectate" disabled={p.busy}>WATCH AS SPECTATOR ◉</button></div>}<p className="entry-legal">By entering, you agree to the <a href="/terms">Terms</a> and acknowledge the <a href="/privacy">Privacy Policy</a>. Use an alias—not your real name.</p>
+        {p.error&&<p className="form-error">{p.error}</p>}{p.screen==="create"?<button className="enter-btn" disabled={p.busy}>{p.busy?"CONNECTING…":"CREATE ROOM  →"}</button>:<div className="join-actions"><button className="enter-btn" value="join" disabled={p.busy}>{p.busy?"CONNECTING…":"JOIN TO PLAY  →"}</button><button className="spectator-enter" value="spectate" disabled={p.busy}>WATCH AS SPECTATOR ◉</button></div>}<p className="entry-legal">By entering, you agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Policy</Link>. Use an alias—not your real name.</p>
       </form></section>}
   </Frame></main>;
 }
 
 function RulesDeck({play}:{play:()=>void}) {
   const cards=[
-    {rank:"A",step:"01 / 04",kind:"select",title:"SELECT",copy:"Choose one whole number from 0–100."},
-    {rank:"J",step:"02 / 04",kind:"calculate",title:"CALCULATE",copy:"Find the average of all valid choices."},
-    {rank:"Q",step:"03 / 04",kind:"target",title:"TARGET",copy:"Multiply the average by 0.8."},
-    {rank:"K",step:"04 / 04",kind:"survive",title:"SURVIVE",copy:"Closest gains 1 point. Everyone else loses 1."},
+    {rank:"A",step:"01 / 04",kind:"select",title:"SELECT",copy:"Choose one whole number between 0 and 100."},
+    {rank:"J",step:"02 / 04",kind:"calculate",title:"CALCULATE",copy:"Add every valid choice, then divide by the number of players."},
+    {rank:"Q",step:"03 / 04",kind:"target",title:"TARGET",copy:"Multiply the average by 0.8 to set the target."},
+    {rank:"K",step:"04 / 04",kind:"survive",title:"SURVIVE",copy:"The closest player gains 1 point. Every other player loses 1 point."},
   ];
   const diagram=(kind:string)=>{
     if(kind==="select")return <div className="rule-diagram select-diagram" aria-label="A number line from zero to one hundred with thirty-seven selected"><small>YOUR CHOICE</small><div><span>0</span><i><b/></i><span>100</span></div><strong>37</strong></div>;
@@ -516,6 +567,12 @@ function HostScorePanel({players,adjust,pending}:{players:Player[];adjust:(playe
   </aside>;
 }
 
+function visibleShare(element:HTMLElement) {
+  const rect=element.getBoundingClientRect();
+  const visible=Math.max(0,Math.min(rect.bottom,window.innerHeight)-Math.max(rect.top,0));
+  return visible/Math.max(1,Math.min(rect.height,window.innerHeight));
+}
+
 function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;leave:()=>void;busy:boolean;tone:(kind:SoundKind)=>void}) {
   const participants=state.players.filter(player=>player.submitted&&player.pick!==null);
   const finalAverage=state.room.average??0;
@@ -549,6 +606,22 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
   const ledgerRef=useRef<HTMLDivElement|null>(null);
   const previousBeat=useRef(-1);
   const skipRequested=useRef(false);
+  const lastManualNavigation=useRef(0);
+  const revealTarget=useCallback((target:HTMLElement|null,block:ScrollLogicalPosition)=>{
+    if(!target||Date.now()-lastManualNavigation.current<1800||visibleShare(target)>=.72)return;
+    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({behavior:reduced?"auto":"smooth",block});
+    if(document.activeElement===document.body)target.focus({preventScroll:true});
+  },[]);
+
+  useEffect(()=>{
+    const mark=()=>{lastManualNavigation.current=Date.now();};
+    window.addEventListener("wheel",mark,{passive:true});
+    window.addEventListener("touchstart",mark,{passive:true});
+    window.addEventListener("pointerdown",mark,{passive:true});
+    window.addEventListener("keydown",mark);
+    return()=>{window.removeEventListener("wheel",mark);window.removeEventListener("touchstart",mark);window.removeEventListener("pointerdown",mark);window.removeEventListener("keydown",mark);};
+  },[]);
 
   useEffect(()=>{
     const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -566,12 +639,10 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
   },[state.room.round,total]);
 
   useEffect(()=>{
-    const timer=window.setTimeout(()=>{
-      stageRef.current?.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
-      stageRef.current?.focus({preventScroll:true});
-    },180);
+    const timer=window.setTimeout(()=>revealTarget(stageRef.current,"start"),180);
     return()=>clearTimeout(timer);
-  },[state.room.round]);
+  },[state.room.round,revealTarget]);
+  useEffect(()=>{setLedgerExpanded(false);},[state.room.round]);
 
   const phase=elapsed<loadEnd?0:elapsed<balanceEnd?1:elapsed<factorEnd?2:elapsed<lineEnd?3:4;
   const arrivedCount=Math.min(participants.length,Math.max(0,Math.floor((elapsed-transferStart-transferDuration)/transferStep)+1));
@@ -588,7 +659,7 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
   const acidComplete=eliminatedThisRound.length===0||elapsed>=acidEnd;
   const selected=participants.find(player=>player.id===selectedId)??participants.find(player=>player.id===state.me.id)??participants[0];
   const sorted=[...participants].sort((a,b)=>Math.abs((a.pick??0)-finalTarget)-Math.abs((b.pick??0)-finalTarget));
-  const visibleScores=ledgerExpanded?sorted:sorted.slice(0,4);
+  const visibleScores=ledgerExpanded?sorted:[];
   const selectedIsWinner=selected&&!eliminatedIds.has(selected.id)&&!selected.invalid&&(selected.id===state.room.winnerId||tiedIds.has(selected.id));
   const status=phase===0
     ? activeTransfer>=0?`Adding ${participants[activeTransfer]?.name}'s choice`:"Preparing submitted choices"
@@ -611,13 +682,10 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
   useEffect(()=>{
     const timer=window.setTimeout(()=>{
       const target=phase===4?ledgerRef.current:machineRef.current;
-      if(!target)return;
-      const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      target.scrollIntoView({behavior:reduced?"auto":"smooth",block:phase===4?"start":"center"});
-      target.focus({preventScroll:true});
+      revealTarget(target,phase===4?"start":"center");
     },220);
     return()=>window.clearTimeout(timer);
-  },[phase,state.room.round]);
+  },[phase,state.room.round,revealTarget]);
   useEffect(()=>{if(acidActive&&!acidComplete&&!skipped)tone("eliminate");},[acidActive,acidComplete,skipped,tone]);
   useEffect(()=>{
     if(!acidComplete||!meEliminatedThisRound)return;
@@ -638,7 +706,7 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
       </nav>
 
       <div ref={machineRef} tabIndex={-1} className="ceremony-machine">
-        {phase===0&&<div className="choice-rail" aria-label="Submitted choices">
+        {phase===0&&<div className="choice-rail" data-count={participants.length} aria-label="Submitted choices">
           {participants.map((player,index)=><div className={`${index===activeTransfer?"active":""} ${index<arrivedCount?"loaded":""}`} key={player.id}><AvatarBadge avatar={player.avatar}/><span>{player.name}</span><b>{player.pick}</b></div>)}
         </div>}
         {phase===0&&activeTransfer>=0&&<div key={activeTransfer} className="traveling-choice" aria-hidden="true">{participants[activeTransfer]?.pick}</div>}
@@ -673,13 +741,13 @@ function Results({state,next,leave,busy,tone}:{state:GameState;next:()=>void;lea
         {selected&&<><AvatarBadge avatar={selected.avatar}/><span><small>{selectedIsWinner?(tiedIds.has(selected.id)?"TIED CLOSEST":"ROUND WINNER"):selected.id===state.me.id?"YOUR POSITION":"SELECTED POSITION"}</small><strong>{selected.name}</strong></span><b>{selected.pick}</b><span><small>DISTANCE</small><strong>{Math.abs((selected.pick??0)-finalTarget).toFixed(2)}</strong></span></>}
       </div>}
 
-      {final&&<div ref={ledgerRef} tabIndex={-1} className={`result-ledger-shell ${ledgerExpanded?"is-expanded":"is-compact"}`} aria-label="Round scores">
-        <div className="result-ledger">
+      {final&&<div ref={ledgerRef} tabIndex={-1} className={`result-ledger-shell ${ledgerExpanded?"is-expanded":"is-collapsed"}`} aria-label="Round scores">
+        <div id="round-player-leaderboard" className="result-ledger" data-count={visibleScores.length} hidden={!ledgerExpanded}>
         {visibleScores.map((player,index)=>{const outcomeWinner=!eliminatedIds.has(player.id)&&!player.invalid&&(player.id===state.room.winnerId||tiedIds.has(player.id));return <button onClick={()=>setSelectedId(player.id)} className={`${player.id===state.me.id?"self":""} ${outcomeWinner?"winner":""} ${eliminatedIds.has(player.id)?"eliminated":""}`} key={player.id}>
           <span>{String(index+1).padStart(2,"0")}</span><AvatarBadge avatar={player.avatar}/><strong>{player.name}{player.id===state.me.id&&<small>YOU</small>}</strong><b>{player.pick}</b><em>Δ {Math.abs((player.pick??0)-finalTarget).toFixed(2)}</em><i><small>ROUND</small><b>{player.roundDelta>0?"+":""}{player.roundDelta}</b><small>TOTAL</small><b>{player.score}</b></i>
         </button>})}
         </div>
-        {sorted.length>4&&<button className="ledger-toggle" onClick={()=>{tone("reveal");setLedgerExpanded(value=>!value);}} aria-expanded={ledgerExpanded}>{ledgerExpanded?"SHOW TOP FOUR":"SHOW ALL PLAYERS"}<b>{ledgerExpanded?"↑":"↓"}</b><span>{sorted.length} ENTRIES</span></button>}
+        <button className="ledger-toggle" onClick={()=>{tone("reveal");setLedgerExpanded(value=>!value);}} aria-expanded={ledgerExpanded} aria-controls="round-player-leaderboard">{ledgerExpanded?"HIDE PLAYER LEADERBOARD":"SHOW PLAYER LEADERBOARD"}<b>{ledgerExpanded?"↑":"↓"}</b><span>{sorted.length} PLAYERS</span></button>
       </div>}
 
       {acidActive&&<AcidCeremony players={eliminatedThisRound} complete={acidComplete}/>}

@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1600" width="1600" height="1600" style="display:block;width:100%;height:auto" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="title description">
+  <title id="title">Lady Justice technical blueprint</title>
+  <desc id="description">A front-facing Lady Justice with blindfold, balance scales, downward sword, Roman numeral halo, engineering grid, measurements, and construction geometry, drawn in fine ivory lines on dark navy.</desc>
+  <defs>
+    <linearGradient id="navyField" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#08151f"/>
+      <stop offset=".5" stop-color="#0a1b27"/>
+      <stop offset="1" stop-color="#06111a"/>
+    </linearGradient>
+    <radialGradient id="focusGlow" cx="50%" cy="43%" r="67%">
+      <stop offset="0" stop-color="#193b4b" stop-opacity=".34"/>
+      <stop offset=".58" stop-color="#102936" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#02080d" stop-opacity=".5"/>
+    </radialGradient>
+    <pattern id="minorGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#89a9b4" stroke-opacity=".085" stroke-width="1"/>
+      <circle cx="0" cy="0" r="1.4" fill="#cdd8d6" fill-opacity=".16"/>
+    </pattern>
+    <pattern id="majorGrid" width="200" height="200" patternUnits="userSpaceOnUse">
+      <rect width="200" height="200" fill="url(#minorGrid)"/>
+      <path d="M200 0H0V200" fill="none" stroke="#9eb5b9" stroke-opacity=".13" stroke-width="1.5"/>
+    </pattern>
+    <filter id="grain" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".62" numOctaves="2" seed="17"/>
+      <feColorMatrix values="1 0 0 0 .6  0 1 0 0 .68  0 0 1 0 .69  0 0 0 .2 0"/>
+    </filter>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <g id="crosshair" fill="none" stroke="currentColor">
+      <circle r="9"/>
+      <path d="M-16 0H16M0-16V16"/>
+      <circle r="2" fill="currentColor" stroke="none"/>
+    </g>
+    <g id="draftArrow" fill="none" stroke="currentColor" stroke-linecap="square">
+      <path d="M0 0H25M0 0l8-5M0 0l8 5"/>
+    </g>
+    <g id="pan" fill="none" stroke="currentColor" stroke-linejoin="round">
+      <path d="M-73 0Q0 30 73 0Q63 56 0 63Q-63 56-73 0Z"/>
+      <path d="M-73 0H73M-59 0L0-100M59 0L0-100"/>
+      <circle cy="-100" r="5" fill="currentColor" stroke="none"/>
+    </g>
+    <clipPath id="artboard"><rect width="1600" height="1600" rx="18"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#artboard)">
+    <rect width="1600" height="1600" fill="url(#navyField)"/>
+    <rect width="1600" height="1600" fill="url(#majorGrid)"/>
+    <rect width="1600" height="1600" fill="url(#focusGlow)"/>
+    <rect width="1600" height="1600" filter="url(#grain)" opacity=".16" style="mix-blend-mode:soft-light"/>
+
+    <!-- TECHNICAL CONSTRUCTION FIELD -->
+    <g id="construction" fill="none" stroke="#91aeb5" stroke-width="1.25" stroke-opacity=".24">
+      <circle cx="800" cy="510" r="390" stroke-dasharray="3 13"/>
+      <circle cx="800" cy="510" r="322"/>
+      <circle cx="800" cy="510" r="272" stroke-dasharray="9 9"/>
+      <circle cx="800" cy="510" r="188" stroke-dasharray="2 12"/>
+      <circle cx="800" cy="800" r="610" stroke-dasharray="5 18"/>
+      <path d="M800 55V1545M55 800H1545" stroke-dasharray="7 14"/>
+      <path d="M185 185L1415 1415M1415 185L185 1415" stroke-dasharray="3 15"/>
+      <path d="M300 285H1300M300 1315H1300M285 300V1300M1315 300V1300"/>
+      <path d="M800 94L1498 800L800 1506L102 800Z"/>
+      <path d="M800 166L1430 800L800 1434L170 800Z" stroke-dasharray="2 10"/>
+      <g color="#b9c9c7" stroke="currentColor" stroke-width="1.4">
+        <use href="#crosshair" x="800" y="510"/>
+        <use href="#crosshair" x="185" y="185"/>
+        <use href="#crosshair" x="1415" y="185"/>
+        <use href="#crosshair" x="185" y="1415"/>
+        <use href="#crosshair" x="1415" y="1415"/>
+        <use href="#crosshair" x="300" y="800"/>
+        <use href="#crosshair" x="1300" y="800"/>
+      </g>
+    </g>
+
+    <!-- DIMENSIONING -->
+    <g id="dimensions" fill="none" stroke="#b6c6c3" stroke-width="1.35" stroke-opacity=".46">
+      <path d="M305 245H1295M305 235V255M1295 235V255"/>
+      <use href="#draftArrow" x="305" y="245" color="#b6c6c3"/>
+      <use href="#draftArrow" x="1295" y="245" color="#b6c6c3" transform="rotate(180 1295 245)"/>
+      <path d="M1380 310V1290M1370 310H1390M1370 1290H1390"/>
+      <use href="#draftArrow" x="1380" y="310" color="#b6c6c3" transform="rotate(90 1380 310)"/>
+      <use href="#draftArrow" x="1380" y="1290" color="#b6c6c3" transform="rotate(-90 1380 1290)"/>
+      <path d="M240 510H455M1145 510H1360M800 105V255M800 1345V1495" stroke-dasharray="2 7"/>
+      <path d="M220 500v20m25-20v20m25-20v20m1060-20v20m25-20v20"/>
+    </g>
+    <g fill="#c5d0cc" fill-opacity=".53" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16" letter-spacing="3">
+      <text x="800" y="230" text-anchor="middle">Ø 990 / AXIAL ELEVATION</text>
+      <text x="1405" y="800" text-anchor="middle" transform="rotate(90 1405 800)">H 980 / DATUM 00</text>
+      <text x="118" y="778" transform="rotate(-90 118 778)">LIBRA · IVSTITIA</text>
+      <text x="1482" y="778" transform="rotate(90 1482 778)">AEQVITAS · VERITAS</text>
+    </g>
+
+    <!-- ROMAN NUMERAL HALO -->
+    <g id="halo" fill="none" stroke="#e8e1d2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="800" cy="510" r="318" stroke-width="2.4" stroke-opacity=".84"/>
+      <circle cx="800" cy="510" r="294" stroke-width="1.2" stroke-opacity=".48" stroke-dasharray="1 9"/>
+      <circle cx="800" cy="510" r="274" stroke-width="1.2" stroke-opacity=".38"/>
+      <g stroke-width="1.5" stroke-opacity=".66">
+        <path d="M800 192v28M959 235l-14 24M1075 351l-24 14M1118 510h-28M1075 669l-24-14M959 785l-14-24M800 828v-28M641 785l14-24M525 669l24-14M482 510h28M525 351l24 14M641 235l14 24"/>
+      </g>
+      <g fill="#e8e1d2" fill-opacity=".8" stroke="none" font-family="Georgia, 'Times New Roman', serif" font-size="33" text-anchor="middle" dominant-baseline="middle">
+        <text x="800" y="172">XII</text>
+        <text x="969" y="218">I</text>
+        <text x="1092" y="341">II</text>
+        <text x="1137" y="510">III</text>
+        <text x="1092" y="679">IV</text>
+        <text x="969" y="802">V</text>
+        <text x="800" y="848">VI</text>
+        <text x="631" y="802">VII</text>
+        <text x="508" y="679">VIII</text>
+        <text x="463" y="510">IX</text>
+        <text x="508" y="341">X</text>
+        <text x="631" y="218">XI</text>
+      </g>
+      <g stroke-width="1" stroke-opacity=".45">
+        <path d="M800 510L800 192M800 510L959 235M800 510L1075 351M800 510L1118 510M800 510L1075 669M800 510L959 785M800 510L800 828M800 510L641 785M800 510L525 669M800 510L482 510M800 510L525 351M800 510L641 235" stroke-dasharray="2 11"/>
+      </g>
+    </g>
+
+    <!-- LADY JUSTICE: HEAD AND HAIR -->
+    <g id="lady-justice" fill="none" stroke="#ece6d8" stroke-linecap="round" stroke-linejoin="round">
+      <g id="head" stroke-width="3">
+        <path d="M727 413Q728 330 800 304Q872 330 873 413Q875 495 800 542Q725 495 727 413Z"/>
+        <path d="M747 365Q765 325 800 318Q835 325 853 365" stroke-width="1.7"/>
+        <path d="M744 459Q764 511 800 525Q836 511 856 459" stroke-width="1.7"/>
+        <path d="M798 404Q787 443 800 455Q813 443 802 404" stroke-width="1.8"/>
+        <path d="M779 478Q800 489 821 478M788 486Q800 492 812 486" stroke-width="1.6"/>
+        <path d="M723 382Q689 393 687 431Q687 465 715 481M877 382Q911 393 913 431Q913 465 885 481" stroke-width="2.1"/>
+        <path d="M731 360Q694 346 687 382Q651 405 676 447Q650 480 688 505Q680 544 724 549" stroke-width="2.2"/>
+        <path d="M869 360Q906 346 913 382Q949 405 924 447Q950 480 912 505Q920 544 876 549" stroke-width="2.2"/>
+        <path d="M713 374Q675 363 672 397M704 414Q664 417 671 449M703 465Q665 482 692 507M887 374Q925 363 928 397M896 414Q936 417 929 449M897 465Q935 482 908 507" stroke-width="1.25" stroke-opacity=".72"/>
+        <path d="M725 407Q800 380 875 407L872 449Q800 471 728 449Z" fill="#091923" fill-opacity=".92" stroke-width="2.8"/>
+        <path d="M733 419Q800 399 867 419M738 440Q800 455 862 440" stroke-width="1.3" stroke-opacity=".72"/>
+        <path d="M719 413l-27-16M881 413l27-16M718 446l-27 18M882 446l27 18"/>
+        <circle cx="800" cy="430" r="7"/>
+        <circle cx="800" cy="430" r="2" fill="#ece6d8"/>
+      </g>
+
+      <!-- NECK, SHOULDERS, TORSO -->
+      <g id="torso" stroke-width="3">
+        <path d="M750 520L745 568Q705 586 661 614M850 520L855 568Q895 586 939 614"/>
+        <path d="M745 556Q800 596 855 556" stroke-width="1.7"/>
+        <path d="M665 612Q710 570 754 574L800 612L846 574Q890 570 935 612"/>
+        <path d="M754 574L800 790L846 574M718 590L800 776L882 590" stroke-width="1.6"/>
+        <path d="M665 612Q690 706 706 790L800 831L894 790Q910 706 935 612"/>
+        <path d="M706 790Q800 818 894 790M720 761Q800 789 880 761" stroke-width="1.5"/>
+        <path d="M800 612V810M763 603L781 797M837 603L819 797" stroke-width="1.25" stroke-opacity=".68"/>
+        <path d="M683 630Q739 652 800 640Q861 652 917 630" stroke-width="1.3"/>
+        <circle cx="800" cy="612" r="13"/>
+        <path d="M792 612l8-8 8 8-8 8Z"/>
+      </g>
+
+      <!-- LEFT ARM AND RAISED SCALES -->
+      <g id="scales" stroke-width="3">
+        <path d="M671 616Q620 634 579 579Q548 538 522 500"/>
+        <path d="M690 670Q632 681 593 619Q558 565 529 516"/>
+        <path d="M522 500Q510 478 491 468Q475 463 469 478Q470 494 492 510L529 516"/>
+        <path d="M492 510Q475 519 482 533Q491 545 509 533L531 518"/>
+        <path d="M508 500Q493 483 501 471Q511 463 522 477L536 496" stroke-width="1.7"/>
+        <circle cx="479" cy="461" r="20"/>
+        <circle cx="479" cy="461" r="6"/>
+        <path d="M479 441V354"/>
+        <path d="M454 353Q479 328 504 353L497 370H461Z"/>
+        <path d="M479 369V410"/>
+        <path d="M228 413Q479 371 730 413Q707 440 680 452Q479 416 278 452Q251 440 228 413Z"/>
+        <path d="M479 410V354M276 452L244 662M682 452L714 662"/>
+        <circle cx="276" cy="452" r="7" fill="#ece6d8"/>
+        <circle cx="682" cy="452" r="7" fill="#ece6d8"/>
+        <circle cx="479" cy="410" r="9"/>
+        <path d="M276 452L204 647M276 452L350 647M682 452L608 647M682 452L756 647" stroke-width="1.8"/>
+        <g color="#ece6d8">
+          <use href="#pan" transform="translate(277 647) scale(.78)"/>
+          <use href="#pan" transform="translate(682 647) scale(.78)"/>
+        </g>
+        <path d="M190 706Q277 741 364 706M595 706Q682 741 769 706" stroke-width="1.2" stroke-dasharray="2 7"/>
+      </g>
+
+      <!-- RIGHT ARM AND SWORD -->
+      <g id="sword" stroke-width="3">
+        <path d="M929 617Q982 640 1014 701Q1037 744 1050 789"/>
+        <path d="M910 671Q959 691 981 734Q1004 777 1015 812"/>
+        <path d="M1015 812Q1023 850 1049 853Q1070 853 1070 830Q1058 801 1050 789"/>
+        <path d="M1021 809Q1035 797 1052 790M1019 826Q1038 817 1064 821" stroke-width="1.6"/>
+        <path d="M1003 860H1165M1027 846Q1084 878 1141 846M1027 874Q1084 842 1141 874"/>
+        <path d="M1061 800L1072 862M1107 862l11-70"/>
+        <path d="M1066 862L1041 1260L1084 1368L1127 1260L1102 862Z"/>
+        <path d="M1084 880V1338M1054 1238L1084 1338L1114 1238" stroke-width="1.5"/>
+        <path d="M1070 757Q1084 735 1098 757L1107 801Q1084 816 1061 801Z"/>
+        <path d="M1076 747V694H1092V747M1074 694h20l-10-26Z"/>
+        <circle cx="1084" cy="854" r="8"/>
+      </g>
+
+      <!-- GOWN AND DRAPERY -->
+      <g id="gown" stroke-width="3">
+        <path d="M706 790Q664 887 632 1011Q603 1124 566 1356Q680 1410 800 1412Q920 1410 1034 1356Q997 1124 968 1011Q936 887 894 790"/>
+        <path d="M706 790Q800 846 894 790"/>
+        <path d="M692 833Q800 888 908 833M664 930Q800 1002 936 930M625 1132Q800 1230 975 1132M584 1327Q800 1430 1016 1327" stroke-width="1.7"/>
+        <path d="M706 808L620 1359M744 827L708 1389M780 839L770 1408M894 808L980 1359M856 827L892 1389M820 839L830 1408" stroke-width="1.5"/>
+        <path d="M800 843V1410" stroke-width="2.2"/>
+        <path d="M706 814Q643 864 618 931Q666 909 704 938Q638 1010 622 1105Q681 1070 731 1102Q661 1189 634 1290Q706 1245 773 1286" stroke-width="1.35" stroke-opacity=".82"/>
+        <path d="M894 814Q957 864 982 931Q934 909 896 938Q962 1010 978 1105Q919 1070 869 1102Q939 1189 966 1290Q894 1245 827 1286" stroke-width="1.35" stroke-opacity=".82"/>
+        <path d="M566 1356Q681 1322 800 1365Q919 1322 1034 1356"/>
+        <path d="M563 1360Q800 1474 1037 1360" stroke-width="2"/>
+        <path d="M603 1390Q800 1460 997 1390" stroke-width="1.25" stroke-dasharray="3 7"/>
+      </g>
+
+      <!-- ORNAMENT AND ANATOMICAL CONSTRUCTION -->
+      <g id="ornament" stroke-width="1.4" stroke-opacity=".62">
+        <path d="M800 304V1412M716 430H884M665 612H935M632 1011H968" stroke-dasharray="3 9"/>
+        <circle cx="800" cy="430" r="112"/>
+        <circle cx="800" cy="612" r="58"/>
+        <ellipse cx="800" cy="790" rx="95" ry="38"/>
+        <path d="M740 570L706 790L632 1011L566 1356M860 570L894 790L968 1011L1034 1356"/>
+        <path d="M608 868L653 891L631 936L586 913ZM992 868L947 891L969 936L1014 913Z"/>
+        <circle cx="608" cy="902" r="54" stroke-dasharray="2 8"/>
+        <circle cx="992" cy="902" r="54" stroke-dasharray="2 8"/>
+      </g>
+    </g>
+
+    <!-- EMPHASIS LINES AND REGISTRATION -->
+    <g id="registration" fill="none" stroke="#f2ecde" stroke-width="1.5" stroke-opacity=".76" filter="url(#softGlow)">
+      <path d="M765 127h70M800 92v70M765 1473h70M800 1438v70M127 765v70M92 800h70M1438 800h70M1473 765v70"/>
+      <circle cx="800" cy="800" r="6"/>
+      <path d="M788 800h24M800 788v24"/>
+    </g>
+    <g fill="#e9e3d6" fill-opacity=".62" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="14" letter-spacing="2.5">
+      <text x="74" y="91">PLATE 07 · JUSTITIA</text>
+      <text x="1526" y="91" text-anchor="end">REV. MMXXVI</text>
+      <text x="74" y="1530">MEDIAN / BEAUTY CONTEST</text>
+      <text x="1526" y="1530" text-anchor="end">SCALE 1:1 · VECTOR</text>
+    </g>
+    <path d="M32 32h70M32 32v70M1568 32h-70M1568 32v70M32 1568h70M32 1568v-70M1568 1568h-70M1568 1568v-70" fill="none" stroke="#e9e3d6" stroke-width="2" stroke-opacity=".55"/>
+  </g>
+</svg>

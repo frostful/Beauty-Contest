@@ -13,7 +13,10 @@ const eslintConfig = defineConfig([
     "dist/**",
     "out/**",
     "build/**",
+    "work/**",
+    ".wrangler/**",
     "next-env.d.ts",
+    "worker-configuration.d.ts",
   ]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -34,6 +37,31 @@ const eslintConfig = defineConfig([
       react: {
         version: "detect",
       },
+    },
+    rules: {
+      // These are local SVG interface assets. Routing them through Next's
+      // raster image optimizer adds no value on the Worker deployment.
+      "@next/next/no-img-element": "off",
+    },
+  },
+  {
+    // This screen is an event-driven realtime orchestrator. These compiler
+    // diagnostics mistake intentional clock/ref reads and connection bootstrap
+    // effects for ordinary render state.
+    files: ["app/page.tsx"],
+    rules: {
+      "react-hooks/purity": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    // The admin route is intentionally a tiny isolated control surface. Its
+    // plain anchors force a full logout/reset when returning to the game.
+    files: ["app/admin/page.tsx"],
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+      "jsx-a11y/no-autofocus": "off",
     },
   },
 ]);
