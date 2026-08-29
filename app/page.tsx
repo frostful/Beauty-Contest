@@ -323,17 +323,21 @@ const AMENDMENT_CUES:Record<RuleAmendmentId,[number,number,number]>={
   hundred_zero:[.14,.51,.72],
 };
 
-function AmendmentVisual({id,step,mentionZero=false,mentionHundred=false}:{id:RuleAmendmentId;step:number;mentionZero?:boolean;mentionHundred?:boolean}){
+function AmendmentVisual({id,step,sealedNumbers=[42],mentionZero=false,mentionHundred=false}:{id:RuleAmendmentId;step:number;sealedNumbers?:number[];mentionZero?:boolean;mentionHundred?:boolean}){
   const amendment=RULE_AMENDMENTS[id];
+  const seals=[...new Set(sealedNumbers.filter(value=>Number.isInteger(value)&&value>=0&&value<=100))];
+  const displayedSeals=seals.length?seals:[42];
+  const firstSeal=displayedSeals[0];
+  const secondSeal=displayedSeals[1]??firstSeal;
   const intro=id==="hundred_zero"?<>FINAL RULE <br className="story-title-break"/>AMENDMENT</>:id==="consecutive_tie"?"DEADLOCK PROTOCOL":<>RULE <br className="story-title-break"/>AMENDMENT <br className="story-title-break"/>{amendment.number} / 05</>;
   return <div className={`amendment-story story-${id} story-step-${step} ${mentionZero?"mention-zero":""} ${mentionHundred?"mention-hundred":""}`}>
     <div className="story-title"><small>K♦ / TABLE AUTHORITY</small><h2>{intro}</h2><span>{amendment.title}</span></div>
     <div className="story-example" aria-hidden="true">
       {id==="tie_seal"&&<>
-        <div className="choice-chip chip-a"><small>PLAYER A</small><b>42</b></div>
-        <div className="choice-chip chip-b"><small>PLAYER B</small><b>42</b></div>
-        <div className="tie-link">SAME CLOSEST CHOICE</div>
-        <div className="seal-result"><b>42</b><i>×</i><span>SEALED</span><small>NEXT ROUND</small></div>
+        <div className="choice-chip chip-a"><small>PLAYER A</small><b>{firstSeal}</b></div>
+        <div className="choice-chip chip-b"><small>PLAYER B</small><b>{secondSeal}</b></div>
+        <div className="tie-link">{displayedSeals.length>1?"EQUAL DISTANCE":"SAME CLOSEST CHOICE"}</div>
+        <div className="seal-result"><b>{displayedSeals.join(" · ")}</b><i>×</i><span>SEALED</span><small>NEXT ROUND</small></div>
       </>}
       {id==="consecutive_tie"&&<>
         <div className="deadlock-round first"><small>ROUND 06</small><b>TIE</b></div>
@@ -478,7 +482,7 @@ function RuleAmendmentTransition({state,preview,now,soundOn,tone}:{state?:GameSt
   return <section className={`rule-amendment-stage kinetic-amendment amendment-${activeId} beat-${beat} ${soundOn&&voiceClock.playing?"voice-playing":""} ${currentNow<itemStartsAt||voiceClock.mode==="loading"?"announcement-preparing":""}`} style={{"--voice-progress":progress} as React.CSSProperties} aria-live="assertive" aria-label={`Rule amendment: ${amendment.title}`}>
     <div className="amendment-scan" aria-hidden="true"/>
     <header className="amendment-head"><span>{preview?"REHEARSAL":`ROUND ${String(state?.room.round??0).padStart(2,"0")}`}</span><b>TABLE AMENDMENT</b><small>{preview?`TRANSMISSION · ${seconds}s`:`SELECTION OPENS IN ${seconds}s`}</small></header>
-    <AmendmentVisual id={activeId} step={beat} mentionZero={mentionZero} mentionHundred={mentionHundred}/>
+    <AmendmentVisual id={activeId} step={beat} sealedNumbers={state?.room.bannedNumbers} mentionZero={mentionZero} mentionHundred={mentionHundred}/>
     <div className="amendment-queue" aria-label={`${activeIndex+1} of ${ids.length} amendments`}>
       {ids.map((id,index)=><span className={index<activeIndex?"done":index===activeIndex?"active":""} key={id}><b>{RULE_AMENDMENTS[id].number}</b>{RULE_AMENDMENTS[id].title}</span>)}
     </div>
@@ -548,9 +552,9 @@ function Arena({state,choice,setChoice,remaining,lock,kick,busy,tone}:{state:Gam
   const soundSelect=()=>{const now=performance.now();if(now-lastSelectTone.current>80){lastSelectTone.current=now;tone("select");}};
   useEffect(()=>{tone("round");},[state.room.round,tone]);
   useEffect(()=>{if(remaining>0&&remaining<=5&&lastTick.current!==remaining){lastTick.current=remaining;tone("tick");}},[remaining,tone]);
-  const step=(direction:-1|1)=>{let next=choice+direction;while(next>=0&&next<=100&&banned.includes(next))next+=direction;soundSelect();setChoice(Math.max(0,Math.min(100,next)));};
+  const step=(direction:-1|1)=>{if(busy)return;let next=choice+direction;while(next>=0&&next<=100&&banned.includes(next))next+=direction;soundSelect();setChoice(Math.max(0,Math.min(100,next)));};
   return <section className="arena"><div className={`timer ${urgent?"urgent":""}`} style={{"--progress":`${progress*360}deg`} as React.CSSProperties}><small>TIME</small><strong>{String(Math.floor(remaining/60)).padStart(2,"0")}:{String(remaining%60).padStart(2,"0")}</strong><span>REMAINING</span></div>
-    <div className="choice-zone"><span className="section-index">ROUND {String(state.room.round).padStart(2,"0")} / SELECT</span><h2>{state.me.isSpectator?"OBSERVATION\nMODE":state.me.submitted?"CHOICE\nLOCKED":"CHOOSE YOUR\nNUMBER"}</h2>{banned.length>0&&!state.me.submitted&&!state.me.isSpectator&&<div className="deadlock-banner"><small>DEADLOCK PROTOCOL</small><strong>{banned.join(" · ")}</strong><span>SEALED THIS ROUND</span></div>}{state.me.isSpectator?<div className="spectator-card">LIVE OBSERVER<small>You can watch every round without affecting the contest.</small><span>◉ READ-ONLY SEAT</span></div>:!state.me.alive?<div className="eliminated-card">GAME OVER<small>You may observe the remaining contest.</small></div>:state.me.submitted?<div className="locked-choice"><small>YOUR SELECTION</small><strong>{String(state.me.pick).padStart(2,"0")}</strong><span>TRANSMITTED ✓</span></div>:<><div className={`number-control ${sealed?"sealed":""}`}><button onClick={()=>step(-1)}>−</button><strong>{String(choice).padStart(2,"0")}</strong><button onClick={()=>step(1)}>+</button></div><div className="range-wrap"><input className="range" aria-label="Choose a number" type="range" min="0" max="100" value={choice} onChange={e=>{soundSelect();setChoice(Number(e.target.value));}}/>{banned.map(number=><i className="sealed-notch" style={{left:`${number}%`}} key={number}/>)}</div><div className="range-labels"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>{sealed&&<p className="sealed-warning">NUMBER {choice} IS SEALED — MOVE OFF THE RED MARK</p>}<button className="lock-btn" onClick={lock} disabled={busy||sealed}>{sealed?"NUMBER SEALED":"LOCK SELECTION"} <span>→</span></button></>}</div>
+    <div className="choice-zone"><span className="section-index">ROUND {String(state.room.round).padStart(2,"0")} / SELECT</span><h2>{state.me.isSpectator?"OBSERVATION\nMODE":state.me.submitted?"CHOICE\nLOCKED":"CHOOSE YOUR\nNUMBER"}</h2>{banned.length>0&&!state.me.submitted&&!state.me.isSpectator&&<div className="deadlock-banner"><small>DEADLOCK PROTOCOL</small><strong>{banned.join(" · ")}</strong><span>SEALED THIS ROUND</span></div>}{state.me.isSpectator?<div className="spectator-card">LIVE OBSERVER<small>You can watch every round without affecting the contest.</small><span>◉ READ-ONLY SEAT</span></div>:!state.me.alive?<div className="eliminated-card">GAME OVER<small>You may observe the remaining contest.</small></div>:state.me.submitted?<div className="locked-choice"><small>YOUR SELECTION</small><strong>{String(state.me.pick).padStart(2,"0")}</strong><span>TRANSMITTED ✓</span></div>:<><div className={`number-control ${sealed?"sealed":""} ${busy?"committing":""}`}><button onClick={()=>step(-1)} disabled={busy} aria-label="Decrease choice">−</button><strong>{String(choice).padStart(2,"0")}</strong><button onClick={()=>step(1)} disabled={busy} aria-label="Increase choice">+</button></div><div className="range-wrap"><input className="range" aria-label="Choose a number" type="range" min="0" max="100" value={choice} disabled={busy} onChange={e=>{if(busy)return;soundSelect();setChoice(Number(e.target.value));}}/>{banned.map(number=><i className="sealed-notch" style={{left:`${number}%`}} key={number}/>)}</div><div className="range-labels"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>{sealed&&<p className="sealed-warning">NUMBER {choice} IS SEALED — MOVE OFF THE RED MARK</p>}<button className="lock-btn" onClick={lock} disabled={busy||sealed}>{busy?"LOCKING…":sealed?"NUMBER SEALED":"LOCK SELECTION"} <span>→</span></button></>}</div>
     <div className="player-feed"><span className="section-index">LIVE STATUS</span>{state.players.map(p=><div className={`feed-row ${!p.alive?"dead":""}`} key={p.id}><AvatarBadge avatar={p.avatar}/><strong>{p.name}{p.id===state.me.id&&<small> YOU</small>}{p.isBot&&<small> BOT</small>}</strong><i>{!p.alive?"ELIMINATED":p.submitted?"LOCKED ✓":"THINKING…"}</i><b>{p.score}</b>{state.me.isHost&&p.id!==state.me.id&&<button className="kick-player-btn compact" disabled={busy} onClick={()=>kick(p.id)} aria-label={`Remove ${p.name} from the game`}>×</button>}</div>)}</div>
   </section>;
 }

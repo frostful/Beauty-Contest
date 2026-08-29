@@ -114,7 +114,9 @@ export function calculateRound(
       ? `${unsubmittedCount} player${unsubmittedCount === 1 ? "" : "s"} did not submit and were excluded from the average.`
       : "",
     winners.length > 1
-      ? `Deadlock detected — ${[...new Set(winners.map((player) => Number(player.pick)))].join(" and ")} are sealed next round.${consecutiveTiePenalty ? " Consecutive tie: every tied player loses 1 point." : ""}`
+      ? consecutiveTiePenalty
+        ? `Deadlock penalty — ${[...new Set(winners.map((player) => Number(player.pick)))].join(" and ")} are sealed next round. Every tied player loses 1 point.`
+        : `Tie recorded — ${[...new Set(winners.map((player) => Number(player.pick)))].join(" and ")} are sealed next round.`
       : "",
     hundredZeroVictory
       ? "Final rule invoked — 100 defeats 0. The match is over."

@@ -69,3 +69,22 @@ export const briefingPlaybackDuration = (ids: RuleAmendmentId[]) =>
 
 export const briefingWindowDuration = (ids: RuleAmendmentId[]) =>
   RULE_BRIEFING_PREROLL_MS + briefingPlaybackDuration(ids);
+
+export function tieBriefingIds({
+  currentWasTie,
+  previousWasTie,
+  deadlockPreviouslyAnnounced,
+}: {
+  currentWasTie: boolean;
+  previousWasTie: boolean;
+  deadlockPreviouslyAnnounced: boolean;
+}): RuleAmendmentId[] {
+  if (!currentWasTie) return [];
+
+  return [
+    "tie_seal",
+    ...(previousWasTie && !deadlockPreviouslyAnnounced
+      ? (["consecutive_tie"] as RuleAmendmentId[])
+      : []),
+  ];
+}

@@ -5,6 +5,7 @@ import {
   briefingPlaybackDuration,
   briefingWindowDuration,
   parseBriefingIds,
+  tieBriefingIds,
   type RuleAmendmentId,
 } from "../../../lib/rule-amendments";
 
@@ -127,7 +128,16 @@ async function amendmentsForCompletedRound(db:D1Database,room:RoomRow,aliveAfter
     const previous=room.round>1
       ? await db.prepare("SELECT winner_name FROM round_results WHERE room_code=? AND round=?").bind(room.code,room.round-1).first<{winner_name:string}>()
       : null;
-    amendments.push(previous?.winner_name==="TIE"?"consecutive_tie":"tie_seal");
+    const earlierDeadlock=room.round>2
+      ? await db.prepare(
+        "SELECT 1 AS found FROM round_results current_result JOIN round_results previous_result ON previous_result.room_code=current_result.room_code AND previous_result.round=current_result.round-1 WHERE current_result.room_code=? AND current_result.round<? AND current_result.winner_name='TIE' AND previous_result.winner_name='TIE' LIMIT 1",
+      ).bind(room.code,room.round).first<{found:number}>()
+      : null;
+    amendments.push(...tieBriefingIds({
+      currentWasTie:true,
+      previousWasTie:previous?.winner_name==="TIE",
+      deadlockPreviouslyAnnounced:!!earlierDeadlock,
+    }));
   }
 
   const newlyEliminated=(await db.prepare(

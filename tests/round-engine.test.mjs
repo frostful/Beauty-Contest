@@ -77,3 +77,25 @@ test("elimination is derived only from the committed round outcome", () => {
   assert.equal(result.outcomes.find((item) => item.id === "winner").alive, true);
   assert.equal(result.outcomes.find((item) => item.id === "loser").alive, false);
 });
+
+test("an ordinary tie seals the winning choices without calling it a deadlock", () => {
+  const result = calculateRound(
+    [player("a", 20), player("b", 20)],
+    { eliminatedBefore: 0, previousWasTie: false },
+  );
+  assert.equal(result.winnerName, "TIE");
+  assert.deepEqual(result.outcomes.map((item) => item.delta), [1, 1]);
+  assert.match(result.notice, /tie recorded/i);
+  assert.doesNotMatch(result.notice, /deadlock penalty/i);
+});
+
+test("a consecutive tie applies and labels the deadlock penalty", () => {
+  const result = calculateRound(
+    [player("a", 20), player("b", 20)],
+    { eliminatedBefore: 0, previousWasTie: true },
+  );
+  assert.equal(result.winnerName, "TIE");
+  assert.deepEqual(result.outcomes.map((item) => item.delta), [-1, -1]);
+  assert.match(result.notice, /deadlock penalty/i);
+  assert.match(result.notice, /every tied player loses 1 point/i);
+});
