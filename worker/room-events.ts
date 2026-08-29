@@ -5,6 +5,7 @@ type DurableObjectStorage = {
   put(key: string, value: unknown): Promise<void>;
   setAlarm(scheduledTime: number | Date): Promise<void>;
   deleteAlarm(): Promise<void>;
+  deleteAll(): Promise<void>;
 };
 
 type DurableObjectContext = {
@@ -25,8 +26,13 @@ const isHumanToken = (token: string) => Boolean(token) && !token.startsWith("bot
  */
 export class RoomEvents {
   private roomCode = "";
+  private readonly ctx: DurableObjectContext;
+  private readonly env: RoomEventsEnv;
 
-  constructor(private readonly ctx: DurableObjectContext, private readonly env: RoomEventsEnv) {}
+  constructor(ctx: DurableObjectContext, env: RoomEventsEnv) {
+    this.ctx = ctx;
+    this.env = env;
+  }
 
   private socketToken(socket: WebSocket) {
     try { return (socket.deserializeAttachment() as SocketAttachment | null)?.token ?? ""; }
@@ -57,6 +63,7 @@ export class RoomEvents {
     await this.rememberRoom(code);
 
     if (url.pathname === "/notify" && request.method === "POST") {
+      await this.updateExpiryAlarm();
       const message = JSON.stringify({ type: "invalidate", at: Date.now() });
       for (const socket of this.ctx.getWebSockets()) {
         try { socket.send(message); } catch { /* Closed sockets are discarded by the runtime. */ }
@@ -65,6 +72,10 @@ export class RoomEvents {
     }
 
     if (url.pathname === "/connections") {
+      // Polling is the fallback presence signal when a browser cannot keep a
+      // WebSocket open. Moving the alarm forward here still expires the room
+      // two minutes after that fallback traffic stops.
+      await this.updateExpiryAlarm();
       const tokens = this.ctx.getWebSockets().flatMap(socket => {
         try {
           const attachment = socket.deserializeAttachment() as SocketAttachment | null;
@@ -119,5 +130,6 @@ export class RoomEvents {
       try { socket.send(message); socket.close(1000, "Room expired"); } catch { /* Already closed. */ }
     }
     await this.env.DB.prepare("DELETE FROM rooms WHERE code=?").bind(code).run();
+    await this.ctx.storage.deleteAll();
   }
 }

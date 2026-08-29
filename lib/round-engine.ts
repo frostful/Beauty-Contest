@@ -58,6 +58,7 @@ export function calculateRound(
   let winners: RoundContestant[] = [];
   const submittedPicks = submitted.map((player) => Number(player.pick));
   const hundredZeroVictory =
+    contestants.length === 2 &&
     submitted.length === 2 &&
     submittedPicks.includes(0) &&
     submittedPicks.includes(100);
@@ -75,7 +76,8 @@ export function calculateRound(
     }
   }
 
-  const exact = winners.length === 1 && Number(winners[0].pick) === Math.round(target);
+  const exact = winners.length === 1
+    && Math.abs(Number(winners[0].pick) - target) < 0.000001;
   const loss = options.eliminatedBefore >= 2 && exact ? -2 : -1;
   const consecutiveTiePenalty = options.previousWasTie && winners.length > 1;
   const winnerIds = winners.map((player) => player.id);

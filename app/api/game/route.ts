@@ -158,8 +158,8 @@ async function resolveRound(db: D1Database, room: RoomRow) {
   const resolutionStartedAt=Date.now();
   const staleBefore=resolutionStartedAt-15_000;
   const claim = await db.prepare(
-    "UPDATE rooms SET status='resolving', resolving_at=? WHERE code=? AND (status='playing' OR (status='resolving' AND COALESCE(resolving_at,0)<?))",
-  ).bind(resolutionStartedAt,room.code,staleBefore).run();
+    "UPDATE rooms SET status='resolving', resolving_at=? WHERE code=? AND round=? AND (status='playing' OR (status='resolving' AND COALESCE(resolving_at,0)<?))",
+  ).bind(resolutionStartedAt,room.code,room.round,staleBefore).run();
   if (!claim.meta.changes) return;
   const rows = (await db.prepare("SELECT p.*, COALESCE(pp.avatar, 'diamond') AS avatar FROM players p LEFT JOIN player_profiles pp ON pp.player_id=p.id WHERE p.room_code = ? AND p.alive = 1 ORDER BY p.joined_at").bind(room.code).all()).results as unknown as PlayerRow[];
   if (!rows.length) {
@@ -209,8 +209,8 @@ async function snapshot(db: D1Database, code: string, callerToken: string, retry
   }
   if(room.status==="briefing"&&(room.deadline??0)<=Date.now()){
     const openedAt=Date.now();
-    await db.prepare("UPDATE rooms SET status='playing', deadline=?, message=NULL WHERE code=? AND status='briefing'")
-      .bind(openedAt+room.round_seconds*1000,code).run();
+    await db.prepare("UPDATE rooms SET status='playing', deadline=?, message=NULL WHERE code=? AND round=? AND status='briefing'")
+      .bind(openedAt+room.round_seconds*1000,code,room.round).run();
     room=await getRoom(db,code);
     if(!room)return null;
   }
@@ -304,6 +304,9 @@ export async function POST(request: Request) {
       db.prepare("INSERT INTO players (id, room_code, name, token, is_host, joined_at, last_seen) VALUES (?, ?, ?, ?, 1, ?, ?)").bind(playerId, code, name, hostToken, now, now),
       db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,avatar),
     ]);
+    // Instantiate the room coordinator immediately. If the creator closes the
+    // page before the first WebSocket opens, its alarm still removes the room.
+    await notifyRoom(code);
     return json({ code, token:hostToken });
   }
 
@@ -336,7 +339,13 @@ export async function POST(request: Request) {
 
   if(action==="leave"){
     const leavingHost=!!me.is_host;
-    await db.prepare("DELETE FROM players WHERE id=? AND room_code=?").bind(me.id,code).run();
+    const leavingActiveContestant=!me.token.startsWith("spectator_")&&!!me.alive&&room.status!=="lobby";
+    await db.batch([
+      db.prepare("DELETE FROM players WHERE id=? AND room_code=?").bind(me.id,code),
+      ...(leavingActiveContestant
+        ? [db.prepare("UPDATE rooms SET initial_players=MAX(0,initial_players-1) WHERE code=?").bind(code)]
+        : []),
+    ]);
     if(leavingHost)await ensureConnectedHumanHost(db,room,await getOnlineTokens(code),true);
     await notifyRoom(code);
     return json({left:true});
@@ -347,9 +356,16 @@ export async function POST(request: Request) {
     if(playerId===me.id)return json({error:"Use Leave room to vacate your own seat."},409);
     const targetPlayer=await db.prepare("SELECT * FROM players WHERE id=? AND room_code=? AND token NOT LIKE 'spectator_%'").bind(playerId,code).first<PlayerRow>();
     if(!targetPlayer)return json({error:"Player not found."},404);
-    await db.prepare("DELETE FROM players WHERE id=? AND room_code=?").bind(playerId,code).run();
+    const removingActiveContestant=!!targetPlayer.alive&&room.status!=="lobby";
+    await db.batch([
+      db.prepare("DELETE FROM players WHERE id=? AND room_code=?").bind(playerId,code),
+      ...(removingActiveContestant
+        ? [db.prepare("UPDATE rooms SET initial_players=MAX(0,initial_players-1) WHERE code=?").bind(code)]
+        : []),
+    ]);
   } else if(action==="adjustScore"){
     if(!me.is_host)return json({error:"Only the host can use testing controls."},403);
+    if(room.status==="resolving")return json({error:"Scores cannot be adjusted while a round is being committed."},409);
     const playerId=String(body.playerId??""),delta=Number(body.delta);
     if(![-1,1].includes(delta))return json({error:"Testing adjustments must be +1 or −1."},400);
     const targetPlayer=await db.prepare("SELECT * FROM players WHERE id=? AND room_code=? AND token NOT LIKE 'spectator_%'").bind(playerId,code).first<PlayerRow>();
@@ -393,18 +409,19 @@ export async function POST(request: Request) {
     if (!me.is_host || room.status !== "results") return json({ error:"Only the host can advance the match." }, 403);
     const aliveCount=(await db.prepare("SELECT COUNT(*) AS count FROM players WHERE room_code=? AND alive=1 AND token NOT LIKE 'spectator_%'").bind(code).first<{count:number}>())?.count??0;
     if(aliveCount<=1){
-      await db.prepare("UPDATE rooms SET status='finished', deadline=NULL WHERE code=?").bind(code).run();
+      await db.prepare("UPDATE rooms SET status='finished', deadline=NULL WHERE code=? AND round=? AND status='results'").bind(code,room.round).run();
     }else{
       const amendments=await amendmentsForCompletedRound(db,room,aliveCount);
       const hasBriefing=amendments.length>0;
       await db.batch([
-        db.prepare("UPDATE rooms SET status=?, round=round+1, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, exact_hit=0, message=? WHERE code=?")
-          .bind(hasBriefing?"briefing":"playing",now+(hasBriefing?briefingWindowDuration(amendments):room.round_seconds*1000),hasBriefing?`briefing:${amendments.join(",")}`:null,code),
-        db.prepare("UPDATE players SET pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=?").bind(code),
+        db.prepare("UPDATE players SET pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND EXISTS (SELECT 1 FROM rooms WHERE code=? AND round=? AND status='results')").bind(code,code,room.round),
+        db.prepare("UPDATE rooms SET status=?, round=round+1, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, exact_hit=0, message=? WHERE code=? AND round=? AND status='results'")
+          .bind(hasBriefing?"briefing":"playing",now+(hasBriefing?briefingWindowDuration(amendments):room.round_seconds*1000),hasBriefing?`briefing:${amendments.join(",")}`:null,code,room.round),
       ]);
     }
   } else if (action === "restart") {
     if (!me.is_host) return json({ error:"Only the host can restart." }, 403);
+    if (room.status !== "finished") return json({ error:"The match can only return to the lobby after it has finished." }, 409);
     await db.batch([
       db.prepare("UPDATE rooms SET status='lobby', round=0, initial_players=0, deadline=NULL, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, exact_hit=0, message=NULL WHERE code=?").bind(code),
       db.prepare("UPDATE players SET score=0, alive=1, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token NOT LIKE 'spectator_%'").bind(code),

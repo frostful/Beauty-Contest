@@ -69,6 +69,27 @@ test("0 versus 100 remains a normal calculation while more than two players rema
   assert.equal(result.outcomes.every((item) => item.alive), true);
 });
 
+test("0 versus 100 cannot end a three-player match when the third player misses the timer", () => {
+  const result = calculateRound(
+    [player("zero", 0), player("hundred", 100), player("away", null, 0, false)],
+    { eliminatedBefore: 0, previousWasTie: false },
+  );
+  assert.deepEqual(result.winnerIds, ["zero"]);
+  assert.equal(result.gameWinnerId, null);
+  assert.equal(result.outcomes.every((item) => item.alive), true);
+});
+
+test("a rounded target is not treated as an exact hit", () => {
+  const result = calculateRound(
+    [player("winner", 32), player("other", 47)],
+    { eliminatedBefore: 2, previousWasTie: false },
+  );
+  assert.equal(result.target, 31.6);
+  assert.deepEqual(result.winnerIds, ["winner"]);
+  assert.equal(result.exact, false);
+  assert.equal(result.outcomes.find((item) => item.id === "other").delta, -1);
+});
+
 test("elimination is derived only from the committed round outcome", () => {
   const result = calculateRound(
     [player("winner", 20, -9), player("loser", 80, -9)],
