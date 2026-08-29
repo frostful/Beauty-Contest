@@ -1,4 +1,3 @@
-import { sites } from "@openai/sites-vite-plugin";
 import vinext from "vinext";
 import { defineConfig } from "vite";
 
@@ -21,7 +20,6 @@ export default defineConfig(async ({ command }) => {
       : undefined,
     plugins: [
       vinext(),
-      sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         // Bindings and migrations come from wrangler.jsonc. Repeating them here
