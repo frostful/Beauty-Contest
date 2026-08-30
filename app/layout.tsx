@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Syne } from "next/font/google";
-import { headers } from "next/headers";
 import "./globals.css";
 import "./game.css";
 import "./readability.css";
@@ -27,20 +26,22 @@ import "./rule-amendment.css";
 const body = Space_Grotesk({ variable: "--font-body", subsets: ["latin"] });
 const display = Syne({ variable: "--font-display", subsets: ["latin"] });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const incoming = await headers();
-  const host = incoming.get("x-forwarded-host") ?? incoming.get("host") ?? "localhost:3000";
-  const protocol = incoming.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const origin = `${protocol}://${host}`;
-  const title = "Median — The Beauty Contest";
-  const description = "A live multiplayer game of averages, instinct, and elimination.";
-  return {
-    metadataBase: new URL(origin), title, description,
-    icons: { icon: "/favicon.svg" },
-    openGraph: { title, description, type:"website", images:[{url:`${origin}/og.png`,width:1200,height:630,alt:"Median — The Beauty Contest"}] },
-    twitter: { card:"summary_large_image", title, description, images:[`${origin}/og.png`] },
-  };
-}
+const title = "Median — The Beauty Contest";
+const description = "A live multiplayer game of averages, instinct, and elimination.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://median.mrearthcode.workers.dev"),
+  title,
+  description,
+  icons: { icon: "/favicon.svg" },
+  openGraph: {
+    title,
+    description,
+    type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Median — The Beauty Contest" }],
+  },
+  twitter: { card: "summary_large_image", title, description, images: ["/og.png"] },
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en"><body className={`${body.variable} ${display.variable}`}>{children}</body></html>;
