@@ -1,3 +1,4 @@
+import { env } from "cloudflare:workers";
 import { getD1 } from "../../../db";
 import { calculateRound } from "../../../lib/round-engine";
 import { getOnlineTokens, notifyRoom } from "../../../lib/realtime";
@@ -16,6 +17,22 @@ type PlayerRow = { id:string; room_code:string; name:string; token:string; is_ho
 
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
 const cleanName = (value: unknown) => String(value ?? "").trim().replace(/[^\p{L}\p{N} _.-]/gu, "").slice(0, 18);
+const cleanCode = (value: unknown) => {
+  const code=String(value??"").trim().toUpperCase();
+  return /^[A-Z]{4}$/.test(code)?code:"";
+};
+const authorizationToken = (request:Request) => {
+  const header=request.headers.get("authorization")??"";
+  return header.startsWith("Bearer ")?header.slice(7):"";
+};
+const cleanSessionToken = (value:unknown) => {
+  const sessionToken=String(value??"");
+  return /^[A-Za-z0-9_]{20,96}$/.test(sessionToken)?sessionToken:"";
+};
+const testingControlsEnabled = () => {
+  const value=(env as unknown as {ENABLE_TEST_SCORE_CONTROLS?:unknown}).ENABLE_TEST_SCORE_CONTROLS;
+  return value===true||String(value??"").toLowerCase()==="true";
+};
 const avatars = new Set(["diamond","crown","laser","visa","rabbit","spade","heart","club"]);
 const cleanAvatar = (value:unknown) => avatars.has(String(value)) ? String(value) : "diamond";
 const DEFAULT_ROOM_SIZE = 5;
@@ -270,6 +287,7 @@ async function snapshot(db: D1Database, code: string, callerToken: string, retry
     me: { id:me.id, name:me.name, avatar:me.avatar, isHost:!!me.is_host, isSpectator:me.token.startsWith("spectator_"), alive:!!me.alive, submitted:!!me.submitted, pick:me.pick, score:me.score },
     players: contestants.map(p => ({ id:p.id, name:p.name, avatar:p.avatar, isHost:!!p.is_host, isBot:p.token.startsWith("bot_"), score:p.score, alive:!!p.alive, submitted:!!p.submitted, pick:roundChoicesHidden ? null : p.pick, invalid:!!p.invalid, roundDelta:p.round_delta, online:isOnline(p) })),
     spectators: spectators.map(p=>({id:p.id,name:p.name,avatar:p.avatar,online:isOnline(p)})),
+    testControlsEnabled:testingControlsEnabled(),
     serverNow: Date.now(),
   };
 }
@@ -277,8 +295,9 @@ async function snapshot(db: D1Database, code: string, callerToken: string, retry
 export async function GET(request: Request) {
   const db = getD1();
   const url = new URL(request.url);
-  const code = (url.searchParams.get("code") ?? "").toUpperCase();
-  const caller = url.searchParams.get("token") ?? "";
+  const code = cleanCode(url.searchParams.get("code"));
+  const caller = cleanSessionToken(authorizationToken(request)||url.searchParams.get("token"));
+  if(!code||!caller)return json({error:"Invalid room or session."},400);
   const state = await snapshot(db, code, caller);
   return state ? json(state) : json({ error:"Room or player session not found." }, 404);
 }
@@ -310,8 +329,9 @@ export async function POST(request: Request) {
     return json({ code, token:hostToken });
   }
 
-  const code = String(body.code ?? "").trim().toUpperCase();
-  const caller = String(body.token ?? "");
+  const code = cleanCode(body.code);
+  const caller = cleanSessionToken(authorizationToken(request)||body.token);
+  if(!code)return json({error:"Enter a valid four-letter room code."},400);
   const room = await getRoom(db, code);
   if (!room) return json({ error:"That room does not exist." }, 404);
 
@@ -334,6 +354,7 @@ export async function POST(request: Request) {
     return json({ code, token:playerToken });
   }
 
+  if(!caller)return json({error:"Your player session has expired."},401);
   const me = await db.prepare("SELECT * FROM players WHERE room_code = ? AND token = ?").bind(code, caller).first<PlayerRow>();
   if (!me) return json({ error:"Your player session has expired." }, 401);
 
@@ -364,6 +385,7 @@ export async function POST(request: Request) {
         : []),
     ]);
   } else if(action==="adjustScore"){
+    if(!testingControlsEnabled())return json({error:"Testing controls are disabled."},404);
     if(!me.is_host)return json({error:"Only the host can use testing controls."},403);
     if(room.status==="resolving")return json({error:"Scores cannot be adjusted while a round is being committed."},409);
     const playerId=String(body.playerId??""),delta=Number(body.delta);

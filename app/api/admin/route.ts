@@ -5,10 +5,22 @@ export const dynamic="force-dynamic";
 type AdminEnv={ADMIN_KEY?:string};
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{"Cache-Control":"no-store"}});
 
+async function secureEqual(left:string,right:string) {
+  const encoder=new TextEncoder();
+  const [leftHash,rightHash]=await Promise.all([
+    crypto.subtle.digest("SHA-256",encoder.encode(left)),
+    crypto.subtle.digest("SHA-256",encoder.encode(right)),
+  ]);
+  const leftBytes=new Uint8Array(leftHash),rightBytes=new Uint8Array(rightHash);
+  let difference=0;
+  for(let index=0;index<leftBytes.length;index++)difference|=leftBytes[index]^rightBytes[index];
+  return difference===0;
+}
+
 export async function GET(request:Request){
   const runtime=env as unknown as AdminEnv;
   const supplied=request.headers.get("x-admin-key")??"";
-  if(!runtime.ADMIN_KEY||supplied.length<16||supplied!==runtime.ADMIN_KEY)return json({error:"Invalid administrator access key."},401);
+  if(!runtime.ADMIN_KEY||supplied.length<16||!await secureEqual(supplied,runtime.ADMIN_KEY))return json({error:"Invalid administrator access key."},401);
   const db=getD1();
   const [roomStats,playerStats,roundStats,recentRooms,recentRounds,topPlayers]=await Promise.all([
     db.prepare("SELECT COUNT(*) total, SUM(CASE WHEN status IN ('lobby','playing','results','resolving') THEN 1 ELSE 0 END) active, SUM(CASE WHEN status='finished' THEN 1 ELSE 0 END) finished FROM rooms").first(),

@@ -9,7 +9,7 @@ type Spectator = { id:string; name:string; avatar:string; online:boolean };
 type GameState = {
   room:{ code:string; status:"lobby"|"briefing"|"playing"|"results"|"finished"; round:number; roundSeconds:number; deadline:number|null; resultStartedAt:number|null; autoFinishAt:number|null; average:number|null; target:number|null; winnerId:string|null; winnerName:string|null; exactHit:boolean; message:string|null; initialPlayers:number; bannedNumbers:number[]; amendmentIds:RuleAmendmentId[]; briefingStartedAt:number|null; briefingEndsAt:number|null };
   me:{ id:string; name:string; avatar:string; isHost:boolean; isSpectator:boolean; alive:boolean; submitted:boolean; pick:number|null; score:number };
-  players:Player[]; spectators:Spectator[]; serverNow:number;
+  players:Player[]; spectators:Spectator[]; testControlsEnabled:boolean; serverNow:number;
 };
 type Session = { code:string; token:string };
 type AmendmentPreview = { id:RuleAmendmentId; startedAt:number; run:number };
@@ -45,7 +45,12 @@ function audioMaster(ctx:AudioContext) {
 }
 
 async function api(body:Record<string,unknown>) {
-  const response = await fetch("/api/game", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+  const payload={...body};
+  const sessionToken=typeof payload.token==="string"?payload.token:"";
+  delete payload.token;
+  const headers:Record<string,string>={"Content-Type":"application/json"};
+  if(sessionToken)headers.Authorization=`Bearer ${sessionToken}`;
+  const response = await fetch("/api/game", { method:"POST", headers, body:JSON.stringify(payload) });
   const data = await response.json() as Record<string,unknown>;
   if (!response.ok) throw new Error(String(data.error ?? "Something went wrong."));
   return data;
@@ -121,7 +126,11 @@ export default function Home() {
     refreshAbort.current=controller;
     const requestId=++requestVersion.current;
     try {
-      const response = await fetch(`/api/game?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`, {cache:"no-store",signal:controller.signal});
+      const response = await fetch(`/api/game?code=${encodeURIComponent(session.code)}`, {
+        cache:"no-store",
+        headers:{Authorization:`Bearer ${session.token}`},
+        signal:controller.signal,
+      });
       const data = await response.json() as GameState & {error?:string};
       if(requestId!==requestVersion.current)return;
       if (!response.ok) {
@@ -152,7 +161,10 @@ export default function Home() {
     const connect=()=>{
       if(stopped)return;
       const protocol=location.protocol==="https:"?"wss:":"ws:";
-      socket=new WebSocket(`${protocol}//${location.host}/api/live?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`);
+      socket=new WebSocket(
+        `${protocol}//${location.host}/api/live?code=${encodeURIComponent(session.code)}`,
+        ["median.v1",`median.auth.${session.token}`],
+      );
       socket.onopen=()=>{
         attempts=0;
         if(keepAlive)clearInterval(keepAlive);
@@ -272,7 +284,7 @@ export default function Home() {
 
       {error && <div className="toast" role="alert">{error}<button onClick={()=>setError("")}>×</button></div>}
       {connectionLost&&<div className="reconnect-banner" role="status"><i/><span><strong>CONNECTION INTERRUPTED</strong><small>Your seat is reserved on this device.</small></span><button onClick={()=>refresh(false)}>RECONNECT</button></div>}
-      {state.me.isHost&&state.room.status!=="lobby"&&state.room.status!=="briefing"&&state.room.status!=="finished"&&
+      {state.testControlsEnabled&&state.me.isHost&&state.room.status!=="lobby"&&state.room.status!=="briefing"&&state.room.status!=="finished"&&
         <HostScorePanel players={state.players} adjust={adjustScore} pending={scoreBusy}/>
       }
 

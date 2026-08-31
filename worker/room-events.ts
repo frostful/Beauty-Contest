@@ -100,7 +100,13 @@ export class RoomEvents {
     if (isHumanToken(token)) await this.ctx.storage.deleteAlarm();
     else await this.updateExpiryAlarm();
     server.send(JSON.stringify({ type: "ready", at: Date.now() }));
-    return new Response(null, { status: 101, webSocket: client } as ResponseInit & { webSocket: WebSocket });
+    const requestedProtocols = request.headers.get("sec-websocket-protocol")
+      ?.split(",")
+      .map((protocol) => protocol.trim()) ?? [];
+    const headers = requestedProtocols.includes("median.v1")
+      ? { "Sec-WebSocket-Protocol": "median.v1" }
+      : undefined;
+    return new Response(null, { status: 101, headers, webSocket: client } as ResponseInit & { webSocket: WebSocket });
   }
 
   webSocketMessage(socket: WebSocket, message: string | ArrayBuffer) {
