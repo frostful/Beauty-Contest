@@ -1,6 +1,6 @@
 export type RuleAmendmentId = "tie_seal" | "consecutive_tie" | "duplicates_void" | "exact_double" | "hundred_zero";
 
-export type RuleAmendmentDefinition = {
+type RuleAmendmentDefinition = {
   number: string;
   title: string;
   short: string;
@@ -52,7 +52,7 @@ export const RULE_AMENDMENTS: Record<RuleAmendmentId, RuleAmendmentDefinition> =
   },
 };
 
-export const RULE_BRIEFING_PREROLL_MS = 2_500;
+const RULE_BRIEFING_PREROLL_MS = 2_500;
 
 const RULE_AMENDMENT_IDS = new Set<RuleAmendmentId>(Object.keys(RULE_AMENDMENTS) as RuleAmendmentId[]);
 

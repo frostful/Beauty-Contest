@@ -6,7 +6,7 @@ export type RoundContestant = {
   submitted: boolean;
 };
 
-export type RoundOutcome = {
+type RoundOutcome = {
   id: string;
   pick: number | null;
   won: boolean;
