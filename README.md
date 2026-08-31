@@ -59,7 +59,7 @@ strategies, elimination ceremonies, and a final King of Diamonds coronation.
 - Real-time updates over hibernatable WebSockets
 - Server-authoritative picks, scoring, ties, and eliminations
 - Reconnection and human-only host transfer
-- Host kick controls and temporary score-testing controls
+- Host kick controls and opt-in local score-testing controls
 - Fill-with-bots support with different play personalities
 - Spectator mode that never affects the calculation
 - Narrated, animated rule-amendment interludes
@@ -110,6 +110,7 @@ not an individual browser, the source of truth.
 ### Prerequisites
 
 - Node.js **22.13 or newer**
+- pnpm **11.19** (Corepack can install the pinned version)
 - A Cloudflare account for D1, Durable Objects, and production deployment
 
 ### Local development
@@ -117,8 +118,9 @@ not an individual browser, the source of truth.
 ```bash
 git clone https://github.com/frostful/Beauty-Contest.git
 cd Beauty-Contest
-npm install
-npm run dev
+corepack enable
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 The development server prints its local URL. Open it in separate browser
@@ -128,8 +130,10 @@ seats with bots.
 ### Verification
 
 ```bash
-npm test
-npm run build
+pnpm test
+pnpm lint
+pnpm typecheck
+pnpm build
 ```
 
 The announcement rehearsal console is available at:
@@ -147,16 +151,20 @@ requiring a complete match.
 and `ROOM_EVENTS` Durable Object.
 
 ```bash
-npm run build
-npx wrangler d1 migrations apply median-beauty-contest --remote
-npx wrangler deploy
+pnpm build
+pnpm wrangler d1 migrations apply median-beauty-contest --remote
+pnpm wrangler deploy
 ```
 
 Set the private admin credential as a Worker secret instead of committing it:
 
 ```bash
-npx wrangler secret put ADMIN_KEY
+pnpm wrangler secret put ADMIN_KEY
 ```
+
+Temporary host score controls are disabled by default. For local testing only,
+add `ENABLE_TEST_SCORE_CONTROLS=true` to `.dev.vars`. Do not enable this switch
+on a public or competitive deployment.
 
 ## Project map
 
@@ -188,7 +196,7 @@ Bug reports and focused pull requests are welcome. Before opening a PR:
 
 1. Keep scoring and lifecycle decisions server-authoritative.
 2. Preserve mobile and desktop behavior.
-3. Run `npm test` and `npm run build`.
+3. Run `pnpm test`, `pnpm lint`, `pnpm typecheck`, and `pnpm build`.
 4. Do not commit secrets, `.env` files, private keys, or Wrangler state.
 
 ## Roadmap
