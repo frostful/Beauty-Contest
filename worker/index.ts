@@ -29,6 +29,8 @@ interface ExecutionContext {
   passThroughOnException(): void;
 }
 
+const ROOM_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
 const SECURITY_HEADERS = {
   "Content-Security-Policy": [
     "default-src 'self'",
@@ -169,6 +171,14 @@ const worker = {
 
     const response = await handler.fetch(request, env, ctx);
     return withSecurityHeaders(response, url);
+  },
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      env.DB.prepare("DELETE FROM rooms WHERE created_at < ?")
+        .bind(Date.now() - ROOM_RETENTION_MS)
+        .run()
+        .then(() => undefined),
+    );
   },
 };
 

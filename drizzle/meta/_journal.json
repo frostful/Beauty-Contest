@@ -15,6 +15,13 @@
       "when": 1787548440280,
       "tag": "0001_awesome_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788057600000,
+      "tag": "0002_room_guards",
+      "breakpoints": true
     }
   ]
 }

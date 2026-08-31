@@ -44,6 +44,7 @@ const roomCode = () => {
   return Array.from(bytes, b => chars[b % chars.length]).join("");
 };
 const token = () => crypto.randomUUID().replaceAll("-", "");
+const databaseError = (error:unknown) => error instanceof Error?error.message:String(error);
 const BOT_PROFILES = [
   {name:"ARIS",avatar:"diamond"},{name:"MIKA",avatar:"rabbit"},{name:"ZERO",avatar:"laser"},{name:"NERO",avatar:"spade"},
   {name:"KIRA",avatar:"heart"},{name:"SORA",avatar:"club"},{name:"REN",avatar:"visa"},{name:"AYA",avatar:"crown"},
@@ -314,15 +315,24 @@ export async function POST(request: Request) {
   if (action === "create") {
     if (name.length < 2) return json({ error:"Enter a name with at least 2 characters." }, 400);
     await removeExpiredRooms(db);
-    let code = roomCode();
-    while (await getRoom(db, code)) code = roomCode();
-    const hostToken = token(); const playerId = crypto.randomUUID();
+    let code="",hostToken="",created=false;
     const seconds = [30,60,180].includes(Number(body.roundSeconds)) ? Number(body.roundSeconds) : 180;
-    await db.batch([
-      db.prepare("INSERT INTO rooms (code, host_token, round_seconds, created_at) VALUES (?, ?, ?, ?)").bind(code, hostToken, seconds, now),
-      db.prepare("INSERT INTO players (id, room_code, name, token, is_host, joined_at, last_seen) VALUES (?, ?, ?, ?, 1, ?, ?)").bind(playerId, code, name, hostToken, now, now),
-      db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,avatar),
-    ]);
+    for(let attempt=0;attempt<12;attempt++){
+      code=roomCode();hostToken=token();const playerId=crypto.randomUUID();
+      try{
+        await db.batch([
+          db.prepare("INSERT INTO rooms (code, host_token, round_seconds, created_at) VALUES (?, ?, ?, ?)").bind(code, hostToken, seconds, now),
+          db.prepare("INSERT INTO players (id, room_code, name, token, is_host, joined_at, last_seen) VALUES (?, ?, ?, ?, 1, ?, ?)").bind(playerId, code, name, hostToken, now, now),
+          db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,avatar),
+        ]);
+        created=true;
+        break;
+      }catch(error){
+        if(databaseError(error).includes("rooms.code")&&attempt<11)continue;
+        throw error;
+      }
+    }
+    if(!created)return json({error:"Could not allocate a room code. Try again."},503);
     // Instantiate the room coordinator immediately. If the creator closes the
     // page before the first WebSocket opens, its alarm still removes the room.
     await notifyRoom(code);
@@ -349,7 +359,12 @@ export async function POST(request: Request) {
     const playerToken = spectating?`spectator_${token()}`:token();
     const playerId=crypto.randomUUID();
     try { await db.batch([db.prepare("INSERT INTO players (id, room_code, name, token, alive, joined_at, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(playerId, code, name, playerToken,spectating?0:1, now, now),db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,avatar)]); }
-    catch { return json({ error:"That name is already taken in this room." }, 409); }
+    catch(error) {
+      const message=databaseError(error);
+      if(message.includes("room_full"))return json({error:"This five-seat room is full. Join as a spectator instead."},409);
+      if(message.includes("gallery_full"))return json({error:"The spectator gallery is full."},409);
+      return json({ error:"That name is already taken in this room." }, 409);
+    }
     await notifyRoom(code);
     return json({ code, token:playerToken });
   }
@@ -404,7 +419,12 @@ export async function POST(request: Request) {
     if(needed){
       const used=(await db.prepare("SELECT name FROM players WHERE room_code = ?").bind(code).all()).results.map(row=>String((row as {name:string}).name).toUpperCase());
       const available=BOT_PROFILES.slice(0,needed).map((profile,index)=>{let botName=profile.name,suffix=2;while(used.includes(botName.toUpperCase()))botName=`${profile.name}-${suffix++}`;used.push(botName.toUpperCase());return {...profile,name:botName,personality:index};});
-      await db.batch(available.flatMap(profile=>{const playerId=crypto.randomUUID(),botToken=`bot_${profile.personality}_${token()}`;return [db.prepare("INSERT INTO players (id, room_code, name, token, joined_at, last_seen) VALUES (?, ?, ?, ?, ?, ?)").bind(playerId,code,profile.name,botToken,now+profile.personality,now),db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,profile.avatar)];}));
+      try {
+        await db.batch(available.flatMap(profile=>{const playerId=crypto.randomUUID(),botToken=`bot_${profile.personality}_${token()}`;return [db.prepare("INSERT INTO players (id, room_code, name, token, joined_at, last_seen) VALUES (?, ?, ?, ?, ?, ?)").bind(playerId,code,profile.name,botToken,now+profile.personality,now),db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,profile.avatar)];}));
+      } catch(error) {
+        if(databaseError(error).includes("room_full"))return json({error:"A player joined while the bot seats were being filled. Try again."},409);
+        throw error;
+      }
     }
   } else if (action === "start") {
     if (!me.is_host || room.status !== "lobby") return json({ error:"Only the host can start this match." }, 403);
