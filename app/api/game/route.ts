@@ -297,7 +297,7 @@ export async function GET(request: Request) {
   const db = getD1();
   const url = new URL(request.url);
   const code = cleanCode(url.searchParams.get("code"));
-  const caller = cleanSessionToken(authorizationToken(request)||url.searchParams.get("token"));
+  const caller = cleanSessionToken(authorizationToken(request));
   if(!code||!caller)return json({error:"Invalid room or session."},400);
   const state = await snapshot(db, code, caller);
   return state ? json(state) : json({ error:"Room or player session not found." }, 404);
@@ -340,7 +340,7 @@ export async function POST(request: Request) {
   }
 
   const code = cleanCode(body.code);
-  const caller = cleanSessionToken(authorizationToken(request)||body.token);
+  const caller = cleanSessionToken(authorizationToken(request));
   if(!code)return json({error:"Enter a valid four-letter room code."},400);
   const room = await getRoom(db, code);
   if (!room) return json({ error:"That room does not exist." }, 404);

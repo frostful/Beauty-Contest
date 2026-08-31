@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 const base = (process.argv[2] ?? "").replace(/\/$/, "");
 if (!base.startsWith("https://")) throw new Error("Pass the deployed HTTPS origin.");
 
-const post = async (body) => {
+const post = async (body, token = "") => {
   const response = await fetch(`${base}/api/game`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   const data = await response.json();
@@ -15,8 +18,8 @@ const post = async (body) => {
 };
 
 const host = await post({ action: "create", name: "SMOKE-HOST", avatar: "diamond", roundSeconds: 30 });
-const socketUrl = `${base.replace("https://", "wss://")}/api/live?code=${host.code}&token=${host.token}`;
-const socket = new WebSocket(socketUrl);
+const socketUrl = `${base.replace("https://", "wss://")}/api/live?code=${host.code}`;
+const socket = new WebSocket(socketUrl, ["median.v1", `median.auth.${host.token}`]);
 const messages = [];
 socket.addEventListener("message", (event) => messages.push(String(event.data)));
 await new Promise((resolve, reject) => {
@@ -39,14 +42,16 @@ await new Promise((resolve, reject) => {
   }, 50);
 });
 
-const response = await fetch(`${base}/api/game?code=${host.code}&token=${host.token}`);
+const response = await fetch(`${base}/api/game?code=${host.code}`, {
+  headers: { authorization: `Bearer ${host.token}` },
+});
 const snapshot = await response.json();
 assert.equal(response.ok, true, JSON.stringify(snapshot));
 assert.equal(snapshot.players.length, 2);
 assert.equal(snapshot.me.isHost, true);
 
-await post({ action: "leave", code: host.code, token: guest.token });
-await post({ action: "leave", code: host.code, token: host.token });
+await post({ action: "leave", code: host.code }, guest.token);
+await post({ action: "leave", code: host.code }, host.token);
 socket.close();
 
 console.log(JSON.stringify({ ok: true, room: host.code, websocketMessages: messages.length }));

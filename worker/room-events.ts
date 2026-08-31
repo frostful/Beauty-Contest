@@ -89,7 +89,7 @@ export class RoomEvents {
       return new Response("WebSocket upgrade required.", { status: 426 });
     }
 
-    const token = url.searchParams.get("token") ?? "";
+    const token = request.headers.get("x-median-session") ?? "";
     if (!token || !code) return new Response("Missing room or player token.", { status: 401 });
 
     const pair = new WebSocketPair();

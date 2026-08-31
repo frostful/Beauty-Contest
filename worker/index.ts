@@ -90,12 +90,12 @@ function rateLimited(url: URL): Response {
   }), url);
 }
 
-function websocketToken(request: Request, url: URL): string {
+function websocketToken(request: Request): string {
   const protocols = request.headers.get("sec-websocket-protocol")
     ?.split(",")
     .map((protocol) => protocol.trim());
   const authProtocol = protocols?.find((protocol) => protocol.startsWith("median.auth."));
-  return authProtocol?.slice("median.auth.".length) ?? url.searchParams.get("token") ?? "";
+  return authProtocol?.slice("median.auth.".length) ?? "";
 }
 
 // Image security config. SVG sources with .svg extension auto-skip the
@@ -143,7 +143,7 @@ const worker = {
         return withSecurityHeaders(new Response("WebSocket upgrade required.", { status: 426 }), url);
       }
       const code = (url.searchParams.get("code") ?? "").toUpperCase();
-      const token = websocketToken(request, url);
+      const token = websocketToken(request);
       if (!/^[A-Z]{4}$/.test(code) || !/^[A-Za-z0-9_]{20,96}$/.test(token)) {
         return withSecurityHeaders(new Response("Invalid room or session.", { status: 400 }), url);
       }
@@ -154,7 +154,12 @@ const worker = {
       if (!player) return withSecurityHeaders(new Response("Room or player session not found.", { status: 404 }), url);
       await env.DB.prepare("UPDATE players SET last_seen=? WHERE room_code=? AND token=?").bind(Date.now(), code, token).run();
       const stub = binding.get(binding.idFromName(code));
-      return stub.fetch(new Request(`https://room.internal/socket?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`, request));
+      const internalHeaders = new Headers(request.headers);
+      internalHeaders.set("x-median-session", token);
+      return stub.fetch(new Request(`https://room.internal/socket?code=${encodeURIComponent(code)}`, {
+        headers: internalHeaders,
+        method: request.method,
+      }));
     }
 
     if (url.pathname === "/_vinext/image") {
