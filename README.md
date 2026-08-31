@@ -12,6 +12,7 @@
   [![TypeScript](https://img.shields.io/badge/TypeScript-5-20232a?style=flat-square&logo=typescript&logoColor=3178c6)](https://www.typescriptlang.org/)
   [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-20232a?style=flat-square&logo=cloudflare&logoColor=f38020)](https://workers.cloudflare.com/)
   [![D1](https://img.shields.io/badge/Storage-D1-20232a?style=flat-square&logo=cloudflare&logoColor=f38020)](https://developers.cloudflare.com/d1/)
+  [![License: AGPL v3](https://img.shields.io/badge/Code-AGPL--3.0-20232a?style=flat-square&logo=gnu&logoColor=white)](LICENSE)
 
   [Play the public build](https://median.mrearthcode.workers.dev) ·
   [Report a bug](https://github.com/frostful/Beauty-Contest/issues) ·
@@ -208,9 +209,15 @@ Bug reports and focused pull requests are welcome. Before opening a PR:
 
 ## License
 
-No open-source license has been granted yet. The source is available for review
-and testing, but reuse and redistribution require the copyright holder's
-permission until a license file is added.
+The source code is open source under the
+[GNU Affero General Public License v3.0 only](LICENSE). If you run a modified
+version over a network, the AGPL requires you to offer its corresponding source
+to those users.
+
+Bundled artwork, screenshots, audio, and narration are **not** licensed under
+the AGPL. See [ASSET-LICENSE.md](ASSET-LICENSE.md) before reusing media from
+this repository. Third-party names and trademarks remain the property of their
+respective owners. See [NOTICE.md](NOTICE.md) for the project notice.
 
 ---
 

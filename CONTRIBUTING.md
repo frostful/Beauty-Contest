@@ -11,7 +11,10 @@ changes are easiest to review.
 3. Preserve keyboard, reduced-motion, phone, and desktop behavior.
 4. Do not commit credentials, `.env` files, Wrangler state, D1 exports, or
    third-party media without redistribution permission.
-5. Run the local verification suite:
+5. By contributing source code, you agree that it may be distributed under
+   `AGPL-3.0-only`. Do not contribute media unless you own it or can document
+   permission compatible with [ASSET-LICENSE.md](ASSET-LICENSE.md).
+6. Run the local verification suite:
 
    ```bash
    corepack enable
