@@ -3,12 +3,12 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 1
     groups:
-      production-patches:
-        dependency-type: production
-        update-types: [patch]
-      development-patches:
-        dependency-type: development
-        update-types: [patch]
+      routine-updates:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
