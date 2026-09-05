@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { getD1 } from "../../../db";
 import { calculateRound } from "../../../lib/round-engine";
+import { JOIN_PLAYER_SQL, LOCK_PICK_SQL, RESET_START_PLAYERS_SQL, START_ROOM_SQL } from "../../../lib/game-writes";
 import { getOnlineTokens, notifyRoom } from "../../../lib/realtime";
 import {
   briefingPlaybackDuration,
@@ -358,7 +359,13 @@ export async function POST(request: Request) {
     if (duplicate) return json({ error:"That name is already taken in this room." }, 409);
     const playerToken = spectating?`spectator_${token()}`:token();
     const playerId=crypto.randomUUID();
-    try { await db.batch([db.prepare("INSERT INTO players (id, room_code, name, token, alive, joined_at, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(playerId, code, name, playerToken,spectating?0:1, now, now),db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,avatar)]); }
+    try {
+      const inserted=await db.batch([
+        db.prepare(JOIN_PLAYER_SQL).bind(playerId,code,name,playerToken,spectating?0:1,now,now,code,spectating?1:0),
+        db.prepare("INSERT INTO player_profiles (player_id, avatar) SELECT id, ? FROM players WHERE id=?").bind(avatar,playerId),
+      ]);
+      if(!inserted[0].meta.changes)return json({error:"The match changed while you were joining. Please try again."},409);
+    }
     catch(error) {
       const message=databaseError(error);
       if(message.includes("room_full"))return json({error:"This five-seat room is full. Join as a spectator instead."},409);
@@ -420,7 +427,14 @@ export async function POST(request: Request) {
       const used=(await db.prepare("SELECT name FROM players WHERE room_code = ?").bind(code).all()).results.map(row=>String((row as {name:string}).name).toUpperCase());
       const available=BOT_PROFILES.slice(0,needed).map((profile,index)=>{let botName=profile.name,suffix=2;while(used.includes(botName.toUpperCase()))botName=`${profile.name}-${suffix++}`;used.push(botName.toUpperCase());return {...profile,name:botName,personality:index};});
       try {
-        await db.batch(available.flatMap(profile=>{const playerId=crypto.randomUUID(),botToken=`bot_${profile.personality}_${token()}`;return [db.prepare("INSERT INTO players (id, room_code, name, token, joined_at, last_seen) VALUES (?, ?, ?, ?, ?, ?)").bind(playerId,code,profile.name,botToken,now+profile.personality,now),db.prepare("INSERT INTO player_profiles (player_id, avatar) VALUES (?, ?)").bind(playerId,profile.avatar)];}));
+        const inserted=await db.batch(available.flatMap(profile=>{
+          const playerId=crypto.randomUUID(),botToken=`bot_${profile.personality}_${token()}`;
+          return [
+            db.prepare(JOIN_PLAYER_SQL).bind(playerId,code,profile.name,botToken,1,now+profile.personality,now,code,0),
+            db.prepare("INSERT INTO player_profiles (player_id, avatar) SELECT id, ? FROM players WHERE id=?").bind(profile.avatar,playerId),
+          ];
+        }));
+        if(!inserted[0].meta.changes)return json({error:"The match started while adding bots."},409);
       } catch(error) {
         if(databaseError(error).includes("room_full"))return json({error:"A player joined while the bot seats were being filled. Try again."},409);
         throw error;
@@ -432,21 +446,22 @@ export async function POST(request: Request) {
     if (count < 2) return json({ error:"At least 2 players are required." }, 409);
     const openingAmendments:RuleAmendmentId[]=count===2?["hundred_zero"]:[];
     const openingBriefing=openingAmendments.length>0;
-    await db.batch([
-      db.prepare("UPDATE rooms SET status=?, round=1, initial_players=?, deadline=?, resolving_at=NULL, result_started_at=NULL, average=NULL, target=NULL, winner_id=NULL, winner_name=NULL, message=? WHERE code=?")
-        .bind(openingBriefing?"briefing":"playing",count,now+(openingBriefing?briefingWindowDuration(openingAmendments):room.round_seconds*1000),openingBriefing?`briefing:${openingAmendments.join(",")}`:null,code),
-      db.prepare("UPDATE players SET score=0, alive=1, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token NOT LIKE 'spectator_%'").bind(code),
-      db.prepare("UPDATE players SET score=0, alive=0, pick=NULL, submitted=0, invalid=0, round_delta=0 WHERE room_code=? AND token LIKE 'spectator_%'").bind(code),
+    const started=await db.batch([
+      db.prepare(RESET_START_PLAYERS_SQL).bind(code,code,caller,code,count),
+      db.prepare(START_ROOM_SQL)
+        .bind(openingBriefing?"briefing":"playing",count,now+(openingBriefing?briefingWindowDuration(openingAmendments):room.round_seconds*1000),openingBriefing?`briefing:${openingAmendments.join(",")}`:null,code,caller,code,count),
     ]);
+    if(!started[1].meta.changes)return json({error:"The lobby changed while starting. Please try again."},409);
   } else if (action === "pick") {
     const pick = Number(body.pick);
     if (room.status !== "playing" || !me.alive) return json({ error:"You cannot submit right now." }, 409);
+    if ((room.deadline??0)<=now) return json({error:"The selection time has ended."},409);
     if (!Number.isInteger(pick) || pick < 0 || pick > 100) return json({ error:"Choose a whole number from 0 to 100." }, 400);
     const bannedNumbers = await getBurnedNumbers(db, code, room.round - 1);
     if (bannedNumbers.includes(pick)) return json({ error:`${pick} was sealed by the previous tie. Choose another number.` }, 409);
     if (me.submitted) return json({ error:"Your choice is already locked." }, 409);
-    const locked=await db.prepare("UPDATE players SET pick=?, submitted=1, last_seen=? WHERE id=? AND alive=1 AND submitted=0").bind(pick, now, me.id).run();
-    if(!locked.meta.changes)return json({error:"Your choice is already locked."},409);
+    const locked=await db.prepare(LOCK_PICK_SQL).bind(pick,now,me.id,room.round,Date.now()).run();
+    if(!locked.meta.changes)return json({error:"Your choice is already locked or the round has ended."},409);
   } else if (action === "next") {
     if (!me.is_host || room.status !== "results") return json({ error:"Only the host can advance the match." }, 403);
     const aliveCount=(await db.prepare("SELECT COUNT(*) AS count FROM players WHERE room_code=? AND alive=1 AND token NOT LIKE 'spectator_%'").bind(code).first<{count:number}>())?.count??0;

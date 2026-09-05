@@ -167,6 +167,7 @@ export default function Home() {
       );
       socket.onopen=()=>{
         attempts=0;
+        void refresh(true);
         if(keepAlive)clearInterval(keepAlive);
         keepAlive=setInterval(()=>{if(socket?.readyState===WebSocket.OPEN)socket.send("ping");},45_000);
       };
@@ -174,6 +175,7 @@ export default function Home() {
       socket.onclose=()=>{
         if(keepAlive){clearInterval(keepAlive);keepAlive=null;}
         if(stopped)return;
+        setConnectionLost(true);
         const delay=Math.min(30_000,1_000*2**Math.min(attempts++,5));
         reconnectTimer=setTimeout(connect,delay);
       };
@@ -182,9 +184,13 @@ export default function Home() {
 
     void refresh(false);
     connect();
-    // A low-frequency safety snapshot covers temporary WebSocket failures and
-    // legacy Sites deployments without returning to request-heavy polling.
-    const fallback=setInterval(()=>void refresh(true),60_000);
+    // Preserve sparse polling while live updates work, but recover promptly
+    // when the socket is unavailable (including legacy Sites previews).
+    let fallbackTicks=0;
+    const fallback=setInterval(()=>{
+      fallbackTicks++;
+      if(socket?.readyState!==WebSocket.OPEN||fallbackTicks%12===0)void refresh(true);
+    },5_000);
     return()=>{
       stopped=true;
       clearInterval(fallback);
