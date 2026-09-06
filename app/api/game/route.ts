@@ -294,7 +294,7 @@ async function snapshot(db: D1Database, code: string, callerToken: string, retry
   };
 }
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   const db = getD1();
   const url = new URL(request.url);
   const code = cleanCode(url.searchParams.get("code"));
@@ -304,10 +304,11 @@ export async function GET(request: Request) {
   return state ? json(state) : json({ error:"Room or player session not found." }, 404);
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   const db = getD1();
   let body: Record<string, unknown>;
   try { body = await request.json() as Record<string, unknown>; } catch { return json({ error:"Invalid request." }, 400); }
+  if(!body||typeof body!=="object"||Array.isArray(body))return json({error:"Invalid request."},400);
   const action = String(body.action ?? "");
   const name = cleanName(body.name);
   const avatar = cleanAvatar(body.avatar);
@@ -490,3 +491,16 @@ export async function POST(request: Request) {
   await notifyRoom(code);
   return json(state);
 }
+
+// Framework-level failures can have empty/HTML bodies. Keep API failures JSON
+// and record the underlying exception only in server logs.
+async function handleSafely(request:Request, handler:(request:Request)=>Promise<Response>) {
+  try { return await handler(request); }
+  catch(error) {
+    console.error("Game request failed",error);
+    return json({error:"The game service is temporarily unavailable. Please try again."},503);
+  }
+}
+
+export function GET(request:Request) { return handleSafely(request,handleGet); }
+export function POST(request:Request) { return handleSafely(request,handlePost); }

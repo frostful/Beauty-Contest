@@ -124,6 +124,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
+`pnpm dev` applies the local database migrations before starting the server.
 The development server prints its local URL. Open it in separate browser
 profiles to test multiple human seats, or create a room and fill the remaining
 seats with bots.
@@ -136,6 +137,15 @@ pnpm lint
 pnpm typecheck
 pnpm build
 ```
+
+With `pnpm dev` running in another terminal, exercise the full local game flow:
+
+```bash
+pnpm test:features
+```
+
+This uses disposable local rooms and takes about two minutes, including room
+expiry. It does not modify the production database.
 
 The announcement rehearsal console is available at:
 

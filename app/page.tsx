@@ -2,6 +2,9 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { readApiResponse } from "../lib/api-response";
+import { useLandingNavigation } from "../lib/use-landing-navigation";
+import { SiteFooter } from "./site-footer";
 import { RULE_AMENDMENTS, type RuleAmendmentId } from "../lib/rule-amendments";
 
 type Player = { id:string; name:string; avatar:string; isHost:boolean; isBot:boolean; score:number; alive:boolean; submitted:boolean; pick:number|null; invalid:boolean; roundDelta:number; online:boolean };
@@ -51,9 +54,7 @@ async function api(body:Record<string,unknown>) {
   const headers:Record<string,string>={"Content-Type":"application/json"};
   if(sessionToken)headers.Authorization=`Bearer ${sessionToken}`;
   const response = await fetch("/api/game", { method:"POST", headers, body:JSON.stringify(payload) });
-  const data = await response.json() as Record<string,unknown>;
-  if (!response.ok) throw new Error(String(data.error ?? "Something went wrong."));
-  return data;
+  return readApiResponse(response);
 }
 
 function useTone(enabled:boolean) {
@@ -82,10 +83,9 @@ function useTone(enabled:boolean) {
 }
 
 export default function Home() {
-  const [screen,setScreen] = useState<"home"|"rules"|"create"|"join">("home");
+  const {screen,setScreen,name,setName,code,setCode,seconds,setSeconds,avatar,setAvatar} = useLandingNavigation();
   const [session,setSession] = useState<Session|null>(null);
   const [state,setState] = useState<GameState|null>(null);
-  const [name,setName] = useState(""); const [code,setCode] = useState(""); const [seconds,setSeconds] = useState(180);const [avatar,setAvatar]=useState("diamond");
   const [choice,setChoice] = useState(40); const [busy,setBusy] = useState(false); const [error,setError] = useState("");
   const [connectionLost,setConnectionLost]=useState(false);
   const [scoreBusy,setScoreBusy]=useState<Set<string>>(()=>new Set());
@@ -131,12 +131,10 @@ export default function Home() {
         headers:{Authorization:`Bearer ${session.token}`},
         signal:controller.signal,
       });
-      const data = await response.json() as GameState & {error?:string};
       if(requestId!==requestVersion.current)return;
-      if (!response.ok) {
-        if (response.status===401||response.status===404) { previousStatus.current=null;setConnectionLost(false); saveSession(null); return; }
-        throw new Error(data.error ?? "Room not found.");
-      }
+      if (response.status===401||response.status===404) { previousStatus.current=null;setConnectionLost(false); saveSession(null); return; }
+      const data = await readApiResponse(response) as unknown as GameState;
+      if(requestId!==requestVersion.current)return;
       // A refresh must not resurrect a completed match and replay its ceremony.
       if (previousStatus.current===null&&data.room.status==="finished") { saveSession(null); return; }
       receiveState(data); setError("");setConnectionLost(false);
@@ -270,7 +268,6 @@ export default function Home() {
   const remaining = state?.room.deadline ? Math.max(0,Math.ceil((state.room.deadline-synchronizedNow)/1000)) : 0;
   const champion = state?.players.find(p=>p.alive);
   const inviteUrl = useMemo(() => state && typeof window !== "undefined" ? `${window.location.origin}/?room=${state.room.code}` : "",[state]);
-  useEffect(()=>{ const room=new URLSearchParams(location.search).get("room"); if(room&&!session){setCode(room.toUpperCase());setScreen("join");}},[session]);
 
   if(announcementLab)return <AnnouncementRehearsal now={now} soundOn={soundOn} toggleSound={toggleSound} tone={tone}/>;
   if (!session) return <Landing screen={screen} setScreen={setScreen} name={name} setName={setName} avatar={avatar} setAvatar={setAvatar} code={code} setCode={setCode} seconds={seconds} setSeconds={setSeconds} enter={enter} busy={busy} error={error} tone={tone}/>;
@@ -515,25 +512,26 @@ function CreepingJoker(){
   const fingers=()=>Array.from({length:4}).map((_,index)=><i key={index}/>);
   return <div className={`creeping-joker ${appearance.visible?"is-visible":""}`} style={{"--joker-x":`${appearance.x}%`,"--joker-tilt":`${appearance.tilt}deg`,"--look-x":`${appearance.gazeX}px`,"--look-y":`${appearance.gazeY}px`} as React.CSSProperties} aria-hidden="true"><div className="joker-grip"/><div className="joker-hand left">{fingers()}<b/></div><div className="joker-hand right">{fingers()}<b/></div><div className="joker-head"><div className="joker-hat"><i/><b>♦</b><i/></div><div className="joker-face"><span className="joker-brow left"/><span className="joker-brow right"/><span className="joker-eye left"><i/></span><span className="joker-eye right"><i/></span><span className="joker-nose">♦</span><span className="joker-smile"/></div><small>YOU SHOULD HAVE CHOSEN LOWER</small></div></div>;
 }
-function Frame({children,screen,setScreen}:{children:React.ReactNode;screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"rules"|"create"|"join")=>void}) { return <><div className="grain"/><div className="suit-field" aria-hidden="true"/><BorderlandAtmosphere/>{screen==="home"&&<CreepingJoker/>}<header className="topbar"><button className="brand" onClick={()=>setScreen("home")}><span className="brand-mark"><img src="/king-diamond.svg" alt=""/></span><span>MEDIAN</span></button><span className="topbar-lore" aria-hidden="true">K ♦ / CITIZEN CLASS</span><nav className="home-tabs" aria-label="Homepage navigation"><button className={screen==="home"?"active":""} onClick={()=>setScreen("home")}>GAME</button><button className={screen==="rules"?"active":""} onClick={()=>setScreen("rules")}>RULES</button></nav></header>{children}</>; }
+function Frame({children,screen,setScreen}:{children:React.ReactNode;screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"rules"|"create"|"join")=>void}) { return <><div className="grain"/><div className="suit-field" aria-hidden="true"/><BorderlandAtmosphere/>{screen==="home"&&<CreepingJoker/>}<header className="topbar"><button className="brand" onClick={()=>setScreen("home")}><span className="brand-mark"><img src="/king-diamond.svg" alt=""/></span><span>MEDIAN</span></button><span className="topbar-lore" aria-hidden="true">K ♦ / CITIZEN CLASS</span><nav className="home-tabs" aria-label="Homepage navigation"><button className={screen==="home"?"active":""} aria-current={screen==="home"?"page":undefined} onClick={()=>setScreen("home")}>GAME</button><button className={screen==="rules"?"active":""} aria-current={screen==="rules"?"page":undefined} onClick={()=>setScreen("rules")}>RULES</button></nav></header>{children}</>; }
 
 function Landing(p:{screen:"home"|"rules"|"create"|"join";setScreen:(v:"home"|"rules"|"create"|"join")=>void;name:string;setName:(v:string)=>void;avatar:string;setAvatar:(v:string)=>void;code:string;setCode:(v:string)=>void;seconds:number;setSeconds:(v:number)=>void;enter:(e:FormEvent<HTMLFormElement>)=>void;busy:boolean;error:string;tone:(kind:SoundKind)=>void}) {
   const [cardFlipped,setCardFlipped]=useState(false);
   return <main className={`shell landing-${p.screen}`}><Frame screen={p.screen} setScreen={p.setScreen}>
-    {p.screen==="rules"?<RulesDeck play={()=>p.setScreen("create")}/>:p.screen==="home"?<><section className="hero"><h1><span className="title-the">THE</span><span className="title-beauty">BEAUTY</span><em>CONTEST</em></h1><p className="lede">Choose a number. Read the room. Survive the average.</p>
+    {p.screen==="rules"?<RulesDeck play={()=>p.setScreen("create")} join={()=>p.setScreen("join")}/>:p.screen==="home"?<><section className="hero"><h1><span className="title-the">THE</span><span className="title-beauty">BEAUTY</span><em>CONTEST</em></h1><p className="lede">Choose a number. Read the room. Survive the average.</p>
       <div className="actions"><button className="primary" onClick={()=>p.setScreen("create")}><span>CREATE ROOM</span><b>↗</b></button><button className="secondary" onClick={()=>p.setScreen("join")}>JOIN WITH CODE</button></div>
-    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Mirrored King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button><footer className="home-footer"><nav className="public-legal-links" aria-label="Legal information"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="https://github.com/frostful/Beauty-Contest" target="_blank" rel="noreferrer">Source</a><a href="https://github.com/frostful/Beauty-Contest/blob/main/LICENSE" target="_blank" rel="noreferrer">AGPL-3.0</a><span>© 2026 frostful · Code provided without warranty · Unofficial fan-made game, not affiliated with Netflix</span></nav></footer></>:
-      <section className="entry-stage"><form className="entry-panel" onSubmit={p.enter}><button type="button" className="back" onClick={()=>p.setScreen("home")}>←</button><span className="form-kicker">{p.screen==="create"?"NEW FIVE-SEAT MATCH":"ENTER PROTOCOL"}</span>
+    </section><button type="button" className={`hero-table-card ${cardFlipped?"is-flipped":""}`} aria-label="Flip the King of Diamonds playing card" aria-pressed={cardFlipped} onClick={()=>{p.tone("flip");setCardFlipped(value=>!value);}}><span className="hero-card-inner"><span className="hero-card-face front"><img src="/king-diamond-card.svg" alt="Mirrored King of Diamonds playing card"/></span><span className="hero-card-face back"><img src="/king-diamond.svg" alt=""/><b>K♦</b><small>THE TABLE IS WATCHING</small></span></span></button></>:
+      <section className="entry-stage"><form className="entry-panel" onSubmit={p.enter}><button type="button" className="back" onClick={()=>p.setScreen("home")}>← Back</button><span className="form-kicker">{p.screen==="create"?"NEW FIVE-SEAT MATCH":"ENTER PROTOCOL"}</span>
         {p.screen==="join"&&<label>ROOM CODE<input value={p.code} onChange={e=>p.setCode(e.target.value.replace(/[^a-z]/gi,"").toUpperCase())} required minLength={4} maxLength={4} pattern="[A-Za-z]{4}" placeholder="KJRM"/></label>}
         <label>PLAYER NAME<input value={p.name} onChange={e=>p.setName(e.target.value)} required maxLength={18} placeholder="YOUR ALIAS"/></label>
         <div className="avatar-picker"><span>CHOOSE PROFILE</span><div>{AVATAR_OPTIONS.map(option=><button type="button" aria-label={`Choose ${option.label} profile`} aria-pressed={p.avatar===option.id} className={p.avatar===option.id?"selected":""} onClick={()=>p.setAvatar(option.id)} key={option.id}><AvatarBadge avatar={option.id}/><small>{option.label}</small></button>)}</div></div>
         {p.screen==="create"&&<div className="timer-pick"><span>ROUND TIMER</span><div>{[[30,"30 SEC"],[60,"1 MIN"],[180,"3 MIN · SERIES"]].map(([v,l])=><button type="button" className={p.seconds===v?"active":""} key={v} onClick={()=>p.setSeconds(Number(v))}>{l}</button>)}</div></div>}
         {p.error&&<p className="form-error">{p.error}</p>}{p.screen==="create"?<button className="enter-btn" disabled={p.busy}>{p.busy?"CONNECTING…":"CREATE ROOM  →"}</button>:<div className="join-actions"><button className="enter-btn" value="join" disabled={p.busy}>{p.busy?"CONNECTING…":"JOIN TO PLAY  →"}</button><button className="spectator-enter" value="spectate" disabled={p.busy}>WATCH AS SPECTATOR ◉</button></div>}<p className="entry-legal">By entering, you agree to the <a href="/terms">Terms</a> and acknowledge the <a href="/privacy">Privacy Policy</a>. Use an alias—not your real name.</p>
       </form></section>}
+    <SiteFooter home={p.screen==="home"}/>
   </Frame></main>;
 }
 
-function RulesDeck({play}:{play:()=>void}) {
+function RulesDeck({play,join}:{play:()=>void;join:()=>void}) {
   const cards=[
     {rank:"A",step:"01 / 04",kind:"select",title:"SELECT",copy:"Choose one whole number between 0 and 100."},
     {rank:"J",step:"02 / 04",kind:"calculate",title:"CALCULATE",copy:"Add every valid choice, then divide by the number of players."},
@@ -544,9 +542,9 @@ function RulesDeck({play}:{play:()=>void}) {
     if(kind==="select")return <div className="rule-diagram select-diagram" aria-label="A number line from zero to one hundred with thirty-seven selected"><small>YOUR CHOICE</small><div><span>0</span><i><b/></i><span>100</span></div><strong>37</strong></div>;
     if(kind==="calculate")return <div className="rule-diagram calculate-diagram" aria-label="Eighteen plus thirty-seven plus fifty-two plus sixty-three, divided by four, equals forty-two point five"><div className="calculation-numerator"><span>18</span><i>+</i><span>37</span><i>+</i><span>52</span><i>+</i><span>63</span></div><div className="fraction-line"/><b>4</b><i className="calculation-arrow">↓</i><strong>42.5</strong></div>;
     if(kind==="target")return <div className="rule-diagram target-diagram" aria-label="Forty-two point five multiplied by zero point eight equals thirty-four"><span>42.5</span><b>× 0.8</b><i/><strong>34</strong></div>;
-    return <div className="rule-diagram survive-diagram" aria-label="Choices twenty-nine, thirty-three, thirty-four, forty-one and fifty-eight, with thirty-four closest to the target"><small>↑ TARGET</small><div>{[29,33,34,41,58].map(value=><span className={value===34?"closest":""} key={value}>{value}</span>)}</div><strong>CLOSEST</strong></div>;
+    return <div className="rule-diagram survive-diagram" aria-label="Choices eighteen, thirty-seven, fifty-two and sixty-three, with thirty-seven closest to the target of thirty-four"><small>TARGET 34</small><div>{[18,37,52,63].map(value=><span className={value===37?"closest":""} key={value}>{value}</span>)}</div><strong>37 IS CLOSEST</strong></div>;
   };
-  return <section className="rules-page classic-rules"><div className="rules-intro"><span className="section-index">K♦ / GAME PROTOCOL</span><h2>RULES OF<br/><em>THE TABLE</em></h2><p>Four diamond cards define the contest. Later rounds unlock harsher conditions as players are eliminated.</p></div><div className="classic-rules-deck">{cards.map((card,index)=><article className={`classic-rule-card ${card.kind}-card`} style={{"--card-index":index} as React.CSSProperties} key={card.rank}><span className="classic-corner top"><b>{card.rank}</b><i>♦</i></span><span className="rule-step">{card.step}</span>{diagram(card.kind)}<div className="classic-rule-copy"><h3>{card.title}</h3><p>{card.copy}</p></div><span className="classic-corner bottom"><b>{card.rank}</b><i>♦</i></span></article>)}</div><button className="rules-play" onClick={play}>ACCEPT RULES — CREATE ROOM <span>→</span></button></section>;
+  return <section className="rules-page classic-rules"><div className="rules-intro"><span className="section-index">K♦ / GAME PROTOCOL</span><h2>RULES OF<br/><em>THE TABLE</em></h2><p>Four diamond cards define the contest. Later rounds unlock harsher conditions as players are eliminated.</p></div><div className="classic-rules-deck">{cards.map((card,index)=><article className={`classic-rule-card ${card.kind}-card`} style={{"--card-index":index} as React.CSSProperties} key={card.rank}><span className="classic-corner top"><b>{card.rank}</b><i>♦</i></span><span className="rule-step">{card.step}</span>{diagram(card.kind)}<div className="classic-rule-copy"><h3>{card.title}</h3><p>{card.copy}</p></div><span className="classic-corner bottom"><b>{card.rank}</b><i>♦</i></span></article>)}</div><div className="rules-actions"><button className="rules-play" onClick={play}>CREATE ROOM <span>→</span></button><button className="rules-join" onClick={join}>JOIN WITH CODE</button></div></section>;
 }
 
 function Loading({error,retry,leave}:{error:string;retry:()=>void;leave:()=>void}) { return <main className="loading-screen"><div className="loader-orb">0.8</div><p>{error||"ESTABLISHING SECURE ROOM…"}</p>{error&&<div className="loading-actions"><button onClick={retry}>RECONNECT</button><button onClick={leave}>RETURN HOME</button></div>}</main>; }

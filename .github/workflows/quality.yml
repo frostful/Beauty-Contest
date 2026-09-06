@@ -30,6 +30,23 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm build
+      - name: Exercise the running game
+        run: |
+          pnpm dev > /tmp/median-dev.log 2>&1 &
+          game_server_pid=$!
+          trap 'kill "$game_server_pid" 2>/dev/null || true' EXIT
+          node --input-type=module <<'NODE'
+          let ready = false;
+          for (let attempt = 0; attempt < 90; attempt++) {
+            try {
+              const response = await fetch('http://localhost:3000', { signal: AbortSignal.timeout(2000) });
+              if (response.ok) { ready = true; break; }
+            } catch { /* The server is still starting. */ }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          if (!ready) throw new Error('Local game server did not become ready');
+          NODE
+          pnpm test:features || { cat /tmp/median-dev.log; exit 1; }
       - run: pnpm wrangler types --check
       - run: pnpm wrangler deploy --dry-run
       - run: pnpm audit --prod --audit-level high

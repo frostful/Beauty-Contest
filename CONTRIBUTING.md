@@ -26,6 +26,19 @@ changes are easiest to review.
    pnpm wrangler deploy --dry-run
    ```
 
+## Test the running application
+
+Start `pnpm dev` (which applies local D1 migrations automatically), then run
+`pnpm test:features` in another terminal. This exercises real HTTP requests,
+WebSockets, scoring, amendments, reconnects, host transfer, and the two-minute
+room-expiry alarm against the local server. Allow about two minutes.
+
+For UI changes, also use the browser to create a room, add bots, start a round,
+lock a choice, view results, advance, reconnect, and leave. Verify create/join
+forms, Back/Forward, legal links, and draft retention on desktop and phone
+widths. Screenshots and a passing build alone do not verify that a game works.
+Report any features that could not be tested instead of marking them passed.
+
 ## Pull request notes
 
 Explain what changed, how it was tested, and whether database migrations or
